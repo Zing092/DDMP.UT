@@ -8,10 +8,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
 :root{
@@ -200,36 +197,9 @@ textarea.fc{min-height:82px;resize:vertical;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-thumb{background:rgba(10,22,40,.15);border-radius:3px;}
 .abox{border-radius:var(--rs);border:none;padding:9px 13px;font-size:.86rem;}
-
-
-/* REALTIME INDICATOR */
-.rt-dot{width:8px;height:8px;border-radius:50%;background:var(--green2);display:inline-block;margin-right:5px;animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
-.loading-overlay{position:fixed;inset:0;background:rgba(10,22,40,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
-.loading-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-.rt-dot{width:8px;height:8px;border-radius:50%;background:#22b464;display:inline-block;margin-right:5px;animation:rtpulse 1.5s infinite;}
-@keyframes rtpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.4);}}
-.loading-overlay{position:fixed;inset:0;background:rgba(10,22,40,.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:16px;}
-.ld-spin{width:52px;height:52px;border:4px solid rgba(255,255,255,.15);border-top-color:#f0a500;border-radius:50%;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
-
-<div class="loading-overlay" id="ldOverlay">
-  <div class="ld-spin"></div>
-  <div style="font-size:.95rem;font-weight:700;letter-spacing:.5px;">กำลังเชื่อมต่อ Firebase...</div>
-  <div style="font-size:.75rem;color:rgba(255,255,255,.5);">Realtime Database</div>
-</div>
-
-
-
-  <div style="font-size:.95rem;font-weight:600;">กำลังเชื่อมต่อ Firebase...</div>
-</div>
-
-
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -575,116 +545,59 @@ textarea.fc{min-height:82px;resize:vertical;}
   </div>
 </div>
 
-
-
 <script>
-// ========== FIREBASE ==========
-const firebaseConfig = {
-  apiKey: "AIzaSyD4i4tIdswvYaRLP3EpEHHg_miOJIu-k7o",
-  authDomain: "fire-rescue-app-f03d5.firebaseapp.com",
-  databaseURL: "https://fire-rescue-app-f03d5-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "fire-rescue-app-f03d5",
-  storageBucket: "fire-rescue-app-f03d5.firebasestorage.app",
-  messagingSenderId: "320085960767",
-  appId: "1:320085960767:web:a69ebd5b441f49a580b08a"
-};
-firebase.initializeApp(firebaseConfig);
-const rtdb = firebase.database();
-
-// ========== REALTIME CACHE ==========
-let _emps=[], _vehs=[], _logs=[];
-let _ready=0;
-
-function onReady(){
-  _ready++;
-  if(_ready<3) return;
-  document.getElementById('ldOverlay').style.display='none';
-  if(_emps.length===0) seedData();
-  const sc=sessionStorage.getItem('cu');
-  if(sc){const e=_emps.find(x=>x.id===sc);if(e){CU=e;bootApp();}}
-}
-
-rtdb.ref('emps').on('value',s=>{
-  _emps=s.val()?Object.values(s.val()):[];
-  if(CU){const u=_emps.find(x=>x.id===CU.id);if(u)CU=u;}
-  _ready<3?onReady():liveRefresh();
-});
-rtdb.ref('vehs').on('value',s=>{
-  _vehs=s.val()?Object.values(s.val()):[];
-  _ready<3?onReady():liveRefresh();
-});
-rtdb.ref('logs').on('value',s=>{
-  _logs=s.val()?Object.values(s.val()):[];
-  _ready<3?onReady():liveRefresh();
-});
-
-function liveRefresh(){
-  if(!CU)return;
-  const pg=document.querySelector('.page.active');
-  if(!pg)return;
-  const id=pg.id.replace('page-','');
-  if(id==='dash')renderDash();
-  else if(id==='hist')renderHist();
-  else if(id==='sum')renderSum();
-  else if(id==='admin')renderAdmin();
-}
-
-function seedData(){
-  ['ADMIN001|แอดมินกองป้องกันฯ|หัวหน้ากองป้องกันฯ|admin|admin1234',
-   'EMP001|นายสมชาย ใจดี|เจ้าหน้าที่ป้องกัน|user|1234',
-   'EMP002|นางสาวสุดา มั่นคง|เจ้าหน้าที่ป้องกัน|user|1234',
-   'EMP003|นายวิชัย รักษาการ|เจ้าหน้าที่บรรเทาสาธารณภัย|user|1234'
-  ].forEach(r=>{const[id,name,pos,role,pw]=r.split('|');DB.writeEmp({id,name,pos,role,pw});});
-  [['v1','บก 1234 กทม.','Toyota','Hilux Revo'],
-   ['v2','ทบ 5678 กทม.','Isuzu','D-Max'],
-   ['v3','นข 9012 กทม.','Ford','Ranger']
-  ].forEach(([id,plate,brand,model])=>DB.writeVeh({id,plate,brand,model}));
-}
-
-// ========== DB (Firebase) ==========
+// ===== DB =====
 const DB={
-  emps(){return _emps;},
-  vehs(){return _vehs;},
-  logs(){return _logs;},
-  writeEmp(e){rtdb.ref('emps/'+e.id).set(e);},
-  writeVeh(v){rtdb.ref('vehs/'+v.id).set(v);},
-  writeLog(l){rtdb.ref('logs/'+l.id).set(l);},
-  deleteLog(id){rtdb.ref('logs/'+id).remove();},
-  deleteEmp(id){rtdb.ref('emps/'+id).remove();},
-  deleteVeh(id){rtdb.ref('vehs/'+id).remove();},
-  setEmps(arr){const o={};arr.forEach(e=>o[e.id]=e);rtdb.ref('emps').set(o);},
-  setVehs(arr){const o={};arr.forEach(v=>o[v.id]=v);rtdb.ref('vehs').set(o);},
-  setLogs(arr){const o={};arr.forEach(l=>o[l.id]=l);rtdb.ref('logs').set(o);}
+  g(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}},
+  s(k,v){localStorage.setItem(k,JSON.stringify(v));},
+  emps(){return this.g('emps')||[];},setEmps(v){this.s('emps',v);},
+  vehs(){return this.g('vehs')||[];},setVehs(v){this.s('vehs',v);},
+  logs(){return this.g('logs')||[];},setLogs(v){this.s('logs',v);}
 };
 
-// ========== STATE ==========
+function initData(){
+  if(!DB.g('init')){
+    DB.setEmps([
+      {id:'ADMIN001',name:'แอดมินกองป้องกันฯ',pos:'หัวหน้ากองป้องกันฯ',role:'admin',pw:'admin1234'},
+      {id:'EMP001',name:'นายสมชาย ใจดี',pos:'เจ้าหน้าที่ป้องกัน',role:'user',pw:'1234'},
+      {id:'EMP002',name:'นางสาวสุดา มั่นคง',pos:'เจ้าหน้าที่ป้องกัน',role:'user',pw:'1234'},
+      {id:'EMP003',name:'นายวิชัย รักษาการ',pos:'เจ้าหน้าที่บรรเทาสาธารณภัย',role:'user',pw:'1234'},
+    ]);
+    DB.setVehs([
+      {id:'v1',plate:'บก 1234 กทม.',brand:'Toyota',model:'Hilux Revo'},
+      {id:'v2',plate:'ทบ 5678 กทม.',brand:'Isuzu',model:'D-Max'},
+      {id:'v3',plate:'นข 9012 กทม.',brand:'Ford',model:'Ranger'},
+    ]);
+    DB.s('init',true);
+  }
+}
+
+// ===== STATE =====
 let CU=null,GPS=null,IMGS=[],EDIT_ID=null;
 let DEL_ID=null,DEL_TYPE=null,COMP_ID=null;
 let dChart=null,sPie=null,sBar=null;
 
-// ========== LOGIN ==========
+// ===== LOGIN =====
 function doLogin(){
   const eid=document.getElementById('liEmp').value.trim();
   const pw=document.getElementById('liPw').value;
-  const e=_emps.find(x=>x.id===eid&&x.pw===pw);
+  const e=DB.emps().find(x=>x.id===eid&&x.pw===pw);
   if(!e){
     document.getElementById('loginErr').innerHTML='<div class="abox" style="background:#ffebee;color:#c62828;border:1px solid #ffcdd2;margin-bottom:11px;"><i class="fas fa-exclamation-circle me-1"></i>รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง</div>';
     return;
   }
   CU=e;sessionStorage.setItem('cu',CU.id);
   document.getElementById('loginErr').innerHTML='';
-  document.getElementById('liEmp').value='';
-  document.getElementById('liPw').value='';
+  document.getElementById('liEmp').value='';document.getElementById('liPw').value='';
   bootApp();
 }
 function doLogout(){
-  CU=null;GPS=null;IMGS=[];EDIT_ID=null;
-  sessionStorage.removeItem('cu');
+  CU=null;GPS=null;IMGS=[];EDIT_ID=null;sessionStorage.removeItem('cu');
   document.getElementById('appScreen').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
 }
 
-// ========== BOOT ==========
+// ===== BOOT =====
 function bootApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
@@ -694,7 +607,7 @@ function buildSB(){
   document.getElementById('sbAvt').textContent=CU.name.charAt(0);
   document.getElementById('sbName').textContent=CU.name;
   document.getElementById('sbRole').textContent=CU.role==='admin'?'🔑 แอดมิน · '+CU.pos:CU.pos;
-  document.getElementById('tbUser').innerHTML='<span class="rt-dot"></span>'+CU.id+' · '+CU.name;
+  document.getElementById('tbUser').textContent=CU.id+' · '+CU.name;
   let h=`<div class="sb-sec">เมนูหลัก</div>
     <a onclick="goPage('dash')"><i class="fas fa-tachometer-alt"></i>หน้าหลัก</a>
     <a onclick="goPage('new')"><i class="fas fa-plus-circle"></i>บันทึกงานใหม่</a>
@@ -728,45 +641,52 @@ function startClock(){setInterval(()=>{document.getElementById('tbClock').textCo
 function toggleSB(){document.getElementById('sb').classList.toggle('open');document.getElementById('ovl').classList.toggle('on');}
 function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('ovl').classList.remove('on');}
 
-// ========== VEH ==========
-function busyVehIds(){return _logs.filter(l=>l.status==='active'&&l.vehId).map(l=>l.vehId);}
+// ===== VEH HELPERS =====
+function busyVehIds(){return DB.logs().filter(l=>l.status==='active'&&l.vehId).map(l=>l.vehId);}
 function isVehBusy(vid){return busyVehIds().includes(vid);}
 
-// ========== DASHBOARD ==========
+// ===== DASHBOARD =====
 function renderDash(){
-  const logs=_logs,today=new Date().toISOString().slice(0,10);
+  const logs=DB.logs();
+  const today=new Date().toISOString().slice(0,10);
+  const tl=logs.filter(l=>l.date===today);
+  const al=logs.filter(l=>l.status==='active');
   const types=['เหตุอัคคีภัย','ช่วยเหลือผู้ประสบภัย','เรื่องร้องเรียน/ขอความช่วยเหลือ','ตรวจเช็คอุปกรณ์/เตรียมความพร้อม','งานอื่นๆ'];
   const clrs=['#c0392b','#1565c0','#c87000','#1b5e20','#6a1b9a'];
   const stats=[
-    {n:logs.filter(l=>l.date===today).length,l:'ภารกิจวันนี้',i:'fa-calendar-check',c:'#1e5bbc',bg:'#e8edf8'},
-    {n:logs.filter(l=>l.status==='active').length,l:'กำลังดำเนินการ',i:'fa-spinner',c:'#c87000',bg:'#fff8e1'},
+    {n:tl.length,l:'ภารกิจวันนี้',i:'fa-calendar-check',c:'#1e5bbc',bg:'#e8edf8'},
+    {n:al.length,l:'กำลังดำเนินการ',i:'fa-spinner',c:'#c87000',bg:'#fff8e1'},
     {n:logs.filter(l=>l.status==='done').length,l:'เสร็จสิ้นแล้ว',i:'fa-check-circle',c:'#1a8c4e',bg:'#e8f5e9'},
-    {n:_emps.length,l:'พนักงานทั้งหมด',i:'fa-users',c:'#6a1b9a',bg:'#f3e5f5'},
+    {n:DB.emps().length,l:'พนักงานทั้งหมด',i:'fa-users',c:'#6a1b9a',bg:'#f3e5f5'},
   ];
   document.getElementById('dashStats').innerHTML=stats.map(s=>`
     <div class="col-6 col-md-3"><div class="sc" style="border-left-color:${s.c};">
       <div class="si" style="background:${s.bg};color:${s.c};"><i class="fas ${s.i}"></i></div>
       <div class="sn" style="color:${s.c};">${s.n}</div><div class="sl">${s.l}</div>
     </div></div>`).join('');
-  const bids=busyVehIds();
-  document.getElementById('vehStatusList').innerHTML=_vehs.length?_vehs.slice(0,4).map(v=>{
+
+  const vehs=DB.vehs();const bids=busyVehIds();
+  document.getElementById('vehStatusList').innerHTML=vehs.length?vehs.slice(0,4).map(v=>{
     const busy=bids.includes(v.id);
-    const used=busy?_logs.find(l=>l.vehId===v.id&&l.status==='active'):null;
-    return `<div class="vbar"><div class="vdot ${busy?'busy':'free'}"></div>
+    const used=busy?DB.logs().find(l=>l.vehId===v.id&&l.status==='active'):null;
+    return `<div class="vbar">
+      <div class="vdot ${busy?'busy':'free'}"></div>
       <div style="flex:1;"><strong>${v.plate}</strong> <span style="color:var(--muted);font-size:.78rem;">${v.brand} ${v.model}</span></div>
       <div style="font-size:.78rem;font-weight:700;color:${busy?'var(--red)':'var(--green)'};">${busy?`ไม่ว่าง · ${used?used.empName:''}`:' พร้อมใช้'}</div>
     </div>`;
   }).join('')+'<div style="margin-top:6px;"><button class="bo" onclick="showVehModal()" style="font-size:.76rem;padding:5px 12px;"><i class="fas fa-info-circle me-1"></i>ดูรายละเอียดทั้งหมด</button></div>'
   :'<div style="color:var(--muted);font-size:.83rem;">ไม่มีรถลงทะเบียน</div>';
+
   if(dChart)dChart.destroy();
   dChart=new Chart(document.getElementById('chartDash').getContext('2d'),{
     type:'bar',
     data:{labels:types.map(t=>t.length>16?t.slice(0,16)+'…':t),datasets:[{label:'ภารกิจ',data:types.map(t=>logs.filter(l=>l.type===t).length),backgroundColor:clrs.map(c=>c+'bb'),borderColor:clrs,borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
   });
+
   const recent=[...logs].sort((a,b)=>b.createdAt-a.createdAt).slice(0,5);
   document.getElementById('recentList').innerHTML=recent.length?recent.map(l=>`
-    <div style="border:1px solid var(--border);border-radius:var(--rs);padding:9px 11px;margin-bottom:7px;cursor:pointer;" onclick="viewLog('${l.id}')">
+    <div style="border:1px solid var(--border);border-radius:var(--rs);padding:9px 11px;margin-bottom:7px;cursor:pointer;transition:.15s;" onmouseenter="this.style.boxShadow='var(--shadow)'" onmouseleave="this.style.boxShadow='none'" onclick="viewLog('${l.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
         <div style="min-width:0;"><div style="font-weight:700;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.place||'-'}</div>
         <div style="font-size:.74rem;color:var(--muted);">${l.date} · ${l.empName}</div></div>
@@ -774,8 +694,10 @@ function renderDash(){
       </div>
     </div>`).join(''):'<div style="color:var(--muted);text-align:center;padding:18px 0;font-size:.83rem;">ยังไม่มีข้อมูล</div>';
 }
+
 function showVehModal(){
-  const bids=busyVehIds(),free=_vehs.filter(v=>!bids.includes(v.id)).length;
+  const vehs=DB.vehs();const bids=busyVehIds();
+  const free=vehs.filter(v=>!bids.includes(v.id)).length;
   document.getElementById('mVehBody').innerHTML=`
     <div style="display:flex;gap:16px;margin-bottom:12px;">
       <div style="background:#e8f5e9;border-radius:var(--rs);padding:10px 16px;flex:1;text-align:center;">
@@ -787,20 +709,23 @@ function showVehModal(){
         <div style="font-size:.78rem;color:var(--muted);">กำลังใช้งาน</div>
       </div>
     </div>
-    ${_vehs.map(v=>{
+    ${vehs.map(v=>{
       const busy=bids.includes(v.id);
-      const used=busy?_logs.find(l=>l.vehId===v.id&&l.status==='active'):null;
+      const used=busy?DB.logs().find(l=>l.vehId===v.id&&l.status==='active'):null;
       return `<div class="vbar" style="margin-bottom:6px;">
         <div class="vdot ${busy?'busy':'free'}"></div>
-        <div style="flex:1;"><strong>${v.plate}</strong><br><span style="font-size:.76rem;color:var(--muted);">${v.brand} ${v.model}</span>
-        ${used?`<br><span style="font-size:.72rem;color:var(--red);">โดย: ${used.empName} · ${used.type}</span>`:''}</div>
+        <div style="flex:1;">
+          <strong>${v.plate}</strong><br>
+          <span style="font-size:.76rem;color:var(--muted);">${v.brand} ${v.model}</span>
+          ${used?`<br><span style="font-size:.72rem;color:var(--red);">โดย: ${used.empName} · ${used.type}</span>`:''}
+        </div>
         <span style="font-size:.78rem;font-weight:700;color:${busy?'var(--red)':'var(--green)'};">${busy?'ไม่ว่าง':'ว่าง'}</span>
       </div>`;
     }).join('')}`;
   new bootstrap.Modal(document.getElementById('mVeh')).show();
 }
 
-// ========== GPS ==========
+// ===== GPS =====
 function doGPS(){
   const b=document.getElementById('gpsBox');
   b.className='gbox g-load';b.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>กำลังระบุ...';
@@ -812,7 +737,7 @@ function doGPS(){
   },e=>{b.className='gbox g-err';b.innerHTML=`<i class="fas fa-exclamation-triangle me-1"></i>${e.message}`;},{enableHighAccuracy:true,timeout:10000});
 }
 
-// ========== FORM ==========
+// ===== FORM =====
 function initForm(){
   EDIT_ID=null;GPS=null;IMGS=[];
   const now=new Date();
@@ -824,74 +749,100 @@ function initForm(){
   document.getElementById('imgGrid').innerHTML='';
   document.getElementById('saveMsg').innerHTML='';
   document.getElementById('newTitle').textContent='บันทึกการปฏิบัติงานใหม่';
-  const bids=busyVehIds();
+
+  const vehs=DB.vehs();const bids=busyVehIds();
   const sel=document.getElementById('fVeh');
   sel.innerHTML='<option value="">-- ไม่ใช้รถ --</option>';
-  _vehs.forEach(v=>{
+  vehs.forEach(v=>{
     const busy=bids.includes(v.id);
     sel.innerHTML+=`<option value="${v.id}" ${busy?'style="color:var(--red);"':''}>${v.plate} (${v.brand} ${v.model})${busy?' ⚠ กำลังใช้งาน':''}</option>`;
   });
   document.getElementById('vehWarn').style.display='none';
-  document.getElementById('teamChips').innerHTML=_emps.filter(e=>e.id!==CU.id).map(e=>`
+
+  const emps=DB.emps().filter(e=>e.id!==CU.id);
+  document.getElementById('teamChips').innerHTML=emps.map(e=>`
     <label class="tchip" id="tc-${e.id}" onclick="togChip(this)">
-      <input type="checkbox" value="${e.id}"><i class="fas fa-user" style="font-size:.73rem;"></i>${e.name}
+      <input type="checkbox" value="${e.id}">
+      <i class="fas fa-user" style="font-size:.73rem;"></i>${e.name}
     </label>`).join('');
 }
+
 function chkVeh(){
   const vid=document.getElementById('fVeh').value;
   document.getElementById('vehWarn').style.display=(vid&&isVehBusy(vid)&&!EDIT_ID)?'block':'none';
 }
 function togChip(el){const cb=el.querySelector('input');cb.checked=!cb.checked;el.classList.toggle('on',cb.checked);}
-function onImgChange(e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{IMGS.push(ev.target.result);renderIgrid();};r.readAsDataURL(f);});}
-function renderIgrid(){document.getElementById('imgGrid').innerHTML=IMGS.map((s,i)=>`<div class="ithumb" onclick="viewImg('${s}')"><img src="${s}"><div class="idel" onclick="delImg(event,${i})"><i class="fas fa-times"></i></div></div>`).join('');}
+
+function onImgChange(e){
+  Array.from(e.target.files).forEach(f=>{
+    const r=new FileReader();r.onload=ev=>{IMGS.push(ev.target.result);renderIgrid();};r.readAsDataURL(f);
+  });
+}
+function renderIgrid(){
+  document.getElementById('imgGrid').innerHTML=IMGS.map((s,i)=>`
+    <div class="ithumb" onclick="viewImg('${s}')">
+      <img src="${s}"><div class="idel" onclick="delImg(event,${i})"><i class="fas fa-times"></i></div>
+    </div>`).join('');
+}
 function delImg(e,i){e.stopPropagation();IMGS.splice(i,1);renderIgrid();}
 function viewImg(src){document.getElementById('fullImg').src=src;new bootstrap.Modal(document.getElementById('mImg')).show();}
 function clearForm(){initForm();}
 
 function saveLog(){
-  const date=document.getElementById('fDate').value,ts=document.getElementById('fTimeS').value;
-  const type=document.getElementById('fType').value,place=document.getElementById('fPlace').value.trim();
+  const date=document.getElementById('fDate').value;
+  const ts=document.getElementById('fTimeS').value;
+  const type=document.getElementById('fType').value;
+  const place=document.getElementById('fPlace').value.trim();
   const detail=document.getElementById('fDetail').value.trim();
   if(!date||!ts||!type||!place||!detail){
-    document.getElementById('saveMsg').innerHTML='<div class="abox" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;">กรุณากรอกข้อมูลที่มี * ให้ครบถ้วน</div>';return;
+    document.getElementById('saveMsg').innerHTML='<div class="abox" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;">กรุณากรอกข้อมูลที่มี * ให้ครบถ้วน</div>';
+    return;
   }
   const vehId=document.getElementById('fVeh').value;
-  const veh=vehId?_vehs.find(v=>v.id===vehId):null;
+  const veh=vehId?DB.vehs().find(v=>v.id===vehId):null;
   const tids=Array.from(document.querySelectorAll('#teamChips input:checked')).map(c=>c.value);
   const te=document.getElementById('fTimeE').value;
   const log={
     id:EDIT_ID||'L'+Date.now()+Math.random().toString(36).slice(2,6),
-    empId:CU.id,empName:CU.name,date,timeStart:ts,timeEnd:te||'',type,place,detail,
+    empId:CU.id,empName:CU.name,date,timeStart:ts,timeEnd:te||'',
+    type,place,detail,
     problem:document.getElementById('fProb').value.trim(),
     solution:document.getElementById('fSol').value.trim(),
-    vehId:vehId||'',vehInfo:veh?`${veh.plate} ${veh.brand} ${veh.model}`:'',
+    vehId,vehInfo:veh?`${veh.plate} ${veh.brand} ${veh.model}`:'',
     team:tids,teamNames:tids.map(id=>getEmpName(id)),
-    gps:GPS||null,images:IMGS,
+    gps:GPS,images:IMGS,
     status:te?'done':'active',
-    createdAt:EDIT_ID?(_logs.find(l=>l.id===EDIT_ID)||{}).createdAt||Date.now():Date.now(),
+    createdAt:EDIT_ID?(DB.logs().find(l=>l.id===EDIT_ID)||{}).createdAt||Date.now():Date.now(),
     updatedAt:Date.now()
   };
-  DB.writeLog(log);
-  document.getElementById('saveMsg').innerHTML='<div class="abox" style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;"><i class="fas fa-check-circle me-1"></i>บันทึกสำเร็จ! กำลังซิงค์...</div>';
+  const logs=DB.logs();
+  if(EDIT_ID){const i=logs.findIndex(l=>l.id===EDIT_ID);if(i>=0)logs[i]=log;}else logs.push(log);
+  DB.setLogs(logs);
+  document.getElementById('saveMsg').innerHTML='<div class="abox" style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;"><i class="fas fa-check-circle me-1"></i>บันทึกสำเร็จ!</div>';
   EDIT_ID=null;
   setTimeout(()=>goPage('hist'),900);
 }
 
-// ========== HISTORY ==========
+// ===== HISTORY =====
 function renderHist(){
+  const logs=DB.logs();
   const sch=(document.getElementById('hSrch')||{}).value||'';
   const typ=(document.getElementById('hType')||{}).value||'';
   const dt=(document.getElementById('hDate')||{}).value||'';
   const st=(document.getElementById('hStat')||{}).value||'';
-  let fl=_logs.filter(l=>{
+  let fl=logs.filter(l=>{
     if(typ&&l.type!==typ)return false;
     if(dt&&l.date!==dt)return false;
     if(st&&l.status!==st)return false;
     if(sch){const s=sch.toLowerCase();return(l.place||'').toLowerCase().includes(s)||(l.detail||'').toLowerCase().includes(s)||(l.empName||'').toLowerCase().includes(s);}
     return true;
   }).sort((a,b)=>b.createdAt-a.createdAt);
-  if(!fl.length){document.getElementById('histList').innerHTML='<div style="text-align:center;padding:28px;color:var(--muted);"><i class="fas fa-inbox fa-2x" style="margin-bottom:8px;display:block;"></i>ไม่พบรายการ</div>';return;}
-  const ce=l=>CU.role==='admin'||l.empId===CU.id;
+
+  if(!fl.length){
+    document.getElementById('histList').innerHTML='<div style="text-align:center;padding:28px;color:var(--muted);"><i class="fas fa-inbox fa-2x" style="margin-bottom:8px;display:block;"></i>ไม่พบรายการ</div>';
+    return;
+  }
+  const canEdit=l=>CU.role==='admin'||l.empId===CU.id;
   document.getElementById('histList').innerHTML=fl.map(l=>{
     const dur=l.timeEnd&&l.timeStart?calcDur(l.timeStart,l.timeEnd):'';
     return `<div class="hi">
@@ -910,64 +861,88 @@ function renderHist(){
           ${l.images&&l.images.length?`<span style="font-size:.73rem;color:var(--muted);"><i class="fas fa-image me-1"></i>${l.images.length}</span>`:''}
           ${l.gps?`<span style="font-size:.73rem;color:var(--green);"><i class="fas fa-map-pin me-1"></i>GPS</span>`:''}
           <button class="bsi" onclick="viewLog('${l.id}')" title="ดู"><i class="fas fa-eye"></i></button>
-          ${ce(l)?`<button class="bsi" onclick="editLog('${l.id}')" title="แก้ไข"><i class="fas fa-edit"></i></button>`:''}
-          ${ce(l)&&l.status==='active'?`<button class="bg" onclick="openComp('${l.id}')"><i class="fas fa-flag-checkered"></i> จบภารกิจ</button>`:''}
-          ${ce(l)?`<button class="bsi" onclick="askDel('${l.id}','log')" style="color:var(--red);border-color:#ffcdd2;"><i class="fas fa-trash"></i></button>`:''}
+          ${canEdit(l)?`<button class="bsi" onclick="editLog('${l.id}')" title="แก้ไข"><i class="fas fa-edit"></i></button>`:''}
+          ${canEdit(l)&&l.status==='active'?`<button class="bg" onclick="openComp('${l.id}')"><i class="fas fa-flag-checkered"></i> จบภารกิจ</button>`:''}
+          ${canEdit(l)?`<button class="bsi" onclick="askDel('${l.id}','log')" style="color:var(--red);border-color:#ffcdd2;" title="ลบ"><i class="fas fa-trash"></i></button>`:''}
         </div>
       </div>
     </div>`;
   }).join('');
 }
+
 function calcDur(ts,te){
   const[sh,sm]=ts.split(':').map(Number);const[eh,em]=te.split(':').map(Number);
   let m=(eh*60+em)-(sh*60+sm);if(m<0)m+=1440;
   return m>=60?`${Math.floor(m/60)} ชม. ${m%60} นาที`:`${m} นาที`;
 }
+
 function viewLog(id){
-  const l=_logs.find(x=>x.id===id);if(!l)return;
-  const ce=CU.role==='admin'||l.empId===CU.id;
+  const l=DB.logs().find(x=>x.id===id);if(!l)return;
+  const canEdit=CU.role==='admin'||l.empId===CU.id;
   const dur=l.timeEnd&&l.timeStart?calcDur(l.timeStart,l.timeEnd):'';
-  const flds=[['วันที่',l.date],['เวลา',(l.timeStart||'')+(l.timeEnd?' → '+l.timeEnd:'')],
+  const flds=[
+    ['วันที่',l.date],['เวลา',(l.timeStart||'')+(l.timeEnd?' → '+l.timeEnd:'')],
     ['ระยะเวลา',dur||'-'],['สถานะ',l.status==='active'?'🟡 กำลังดำเนินการ':'✅ เสร็จสิ้น'],
     ['ประเภท',`<span class="bt ${typeBadge(l.type)}">${l.type}</span>`],
     ['สถานที่',l.place||'-'],['รถ',l.vehInfo||'ไม่ใช้รถ'],
     ['ทีมงาน',l.teamNames&&l.teamNames.length?l.teamNames.join(', '):'ไม่มี'],
-    ['บันทึกโดย',l.empName||'-']];
-  let body=`<div class="row g-2 mb-3">${flds.map(([k,v])=>`<div class="col-sm-6"><div style="background:var(--bg);border-radius:var(--rs);padding:9px 11px;"><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);">${k}</div><div style="font-weight:600;font-size:.86rem;">${v}</div></div></div>`).join('')}</div>`;
-  if(l.timeEnd&&l.timeStart)body+=`<div class="done-banner"><i class="fas fa-flag-checkered"></i>ภารกิจเสร็จสิ้น · ระยะเวลา: <strong>${dur}</strong></div>`;
+    ['บันทึกโดย',l.empName||'-'],
+  ];
+  let body=`<div class="row g-2 mb-3">${flds.map(([k,v])=>`
+    <div class="col-sm-6"><div style="background:var(--bg);border-radius:var(--rs);padding:9px 11px;">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);">${k}</div>
+      <div style="font-weight:600;font-size:.86rem;">${v}</div>
+    </div></div>`).join('')}</div>`;
+  if(l.timeEnd&&l.timeStart){
+    body+=`<div class="done-banner"><i class="fas fa-flag-checkered"></i>ภารกิจเสร็จสิ้น · ระยะเวลาปฏิบัติ: <strong>${dur}</strong></div>`;
+  }
   [['รายละเอียดงาน',l.detail],['ปัญหาที่พบ',l.problem],['การแก้ไข / ข้อเสนอแนะ',l.solution]].forEach(([k,v])=>{
-    if(v)body+=`<div style="margin:10px 0;"><div style="font-weight:700;color:var(--navy);font-size:.83rem;margin-bottom:4px;">${k}</div><div style="background:var(--bg);border-radius:var(--rs);padding:11px;font-size:.86rem;white-space:pre-wrap;">${v}</div></div>`;
+    if(v)body+=`<div style="margin:10px 0;"><div style="font-weight:700;color:var(--navy);font-size:.83rem;margin-bottom:4px;">${k}</div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:11px;font-size:.86rem;white-space:pre-wrap;">${v}</div></div>`;
   });
-  if(l.gps)body+=`<div class="gbox g-ok" style="margin:9px 0;"><i class="fas fa-map-pin me-1"></i><strong>พิกัด GPS:</strong> Lat:${l.gps.lat.toFixed(6)}, Lng:${l.gps.lng.toFixed(6)} <a href="https://maps.google.com/?q=${l.gps.lat},${l.gps.lng}" target="_blank"><i class="fas fa-map-marked-alt"></i> Google Maps</a></div>`;
-  if(l.images&&l.images.length)body+=`<div style="margin-top:9px;"><div style="font-weight:700;color:var(--navy);font-size:.83rem;margin-bottom:7px;"><i class="fas fa-images me-1"></i>รูปภาพ (${l.images.length})</div><div class="igrid">${l.images.map(s=>`<div class="ithumb" onclick="viewImg('${s}')"><img src="${s}"></div>`).join('')}</div></div>`;
+  if(l.gps){
+    body+=`<div class="gbox g-ok" style="margin:9px 0;"><i class="fas fa-map-pin me-1"></i><strong>พิกัด GPS:</strong>
+      Lat:${l.gps.lat.toFixed(6)}, Lng:${l.gps.lng.toFixed(6)}
+      <a href="https://maps.google.com/?q=${l.gps.lat},${l.gps.lng}" target="_blank" style="margin-left:7px;"><i class="fas fa-map-marked-alt"></i> Google Maps</a></div>`;
+  }
+  if(l.images&&l.images.length){
+    body+=`<div style="margin-top:9px;"><div style="font-weight:700;color:var(--navy);font-size:.83rem;margin-bottom:7px;"><i class="fas fa-images me-1"></i>รูปภาพ (${l.images.length})</div>
+      <div class="igrid">${l.images.map(s=>`<div class="ithumb" onclick="viewImg('${s}')"><img src="${s}"></div>`).join('')}</div></div>`;
+  }
   document.getElementById('mDetBody').innerHTML=body;
   document.getElementById('mDetFoot').innerHTML=`
-    ${ce&&l.status==='active'?`<button class="bg" onclick="openComp('${l.id}');bootstrap.Modal.getInstance(document.getElementById('mDet')).hide()" style="padding:7px 16px;"><i class="fas fa-flag-checkered"></i> จบภารกิจ</button>`:''}
-    ${ce?`<button class="btn btn-sm btn-outline-primary" onclick="editLog('${l.id}');bootstrap.Modal.getInstance(document.getElementById('mDet')).hide()"><i class="fas fa-edit"></i> แก้ไข</button>`:''}
+    ${canEdit&&l.status==='active'?`<button class="bg" onclick="openComp('${l.id}');bootstrap.Modal.getInstance(document.getElementById('mDet')).hide()" style="padding:7px 16px;"><i class="fas fa-flag-checkered"></i> จบภารกิจ</button>`:''}
+    ${canEdit?`<button class="btn btn-sm btn-outline-primary" onclick="editLog('${l.id}');bootstrap.Modal.getInstance(document.getElementById('mDet')).hide()"><i class="fas fa-edit"></i> แก้ไข</button>`:''}
     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">ปิด</button>`;
   new bootstrap.Modal(document.getElementById('mDet')).show();
 }
+
 function editLog(id){
-  const l=_logs.find(x=>x.id===id);if(!l)return;
+  const l=DB.logs().find(x=>x.id===id);if(!l)return;
   if(l.empId!==CU.id&&CU.role!=='admin'){alert('ไม่มีสิทธิ์แก้ไข');return;}
   EDIT_ID=id;goPage('new');
   setTimeout(()=>{
     document.getElementById('newTitle').textContent='แก้ไขรายการปฏิบัติงาน';
-    ['fDate','fTimeS','fTimeE','fType','fPlace','fDetail','fProb','fSol'].forEach(f=>{
-      const v={fDate:l.date,fTimeS:l.timeStart||'',fTimeE:l.timeEnd||'',fType:l.type||'',fPlace:l.place||'',fDetail:l.detail||'',fProb:l.problem||'',fSol:l.solution||''};
-      document.getElementById(f).value=v[f];
-    });
+    document.getElementById('fDate').value=l.date;
+    document.getElementById('fTimeS').value=l.timeStart||'';
+    document.getElementById('fTimeE').value=l.timeEnd||'';
+    document.getElementById('fType').value=l.type||'';
+    document.getElementById('fPlace').value=l.place||'';
+    document.getElementById('fDetail').value=l.detail||'';
+    document.getElementById('fProb').value=l.problem||'';
+    document.getElementById('fSol').value=l.solution||'';
     if(l.vehId)document.getElementById('fVeh').value=l.vehId;
     GPS=l.gps||null;
     if(GPS){const b=document.getElementById('gpsBox');b.className='gbox g-ok';b.innerHTML=`<i class="fas fa-check-circle me-1"></i>มีพิกัด Lat:${GPS.lat.toFixed(5)},Lng:${GPS.lng.toFixed(5)}`;}
     IMGS=l.images||[];renderIgrid();
-    if(l.team)l.team.forEach(tid=>{const el=document.getElementById('tc-'+tid);if(el){el.querySelector('input').checked=true;el.classList.add('on');}});
+    if(l.team)l.team.forEach(tid=>{const el=document.getElementById('tc-'+tid);if(el){const cb=el.querySelector('input');cb.checked=true;el.classList.add('on');}});
   },80);
 }
 
-// ========== COMPLETE ==========
+// ===== COMPLETE =====
 function openComp(id){
-  COMP_ID=id;const l=_logs.find(x=>x.id===id);if(!l)return;
+  COMP_ID=id;
+  const l=DB.logs().find(x=>x.id===id);if(!l)return;
   document.getElementById('mCompTime').value=new Date().toTimeString().slice(0,5);
   document.getElementById('mCompInfo').innerHTML=`<div style="background:var(--bg);border-radius:var(--rs);padding:11px;">
     <div style="font-weight:700;font-size:.88rem;">${l.type}</div>
@@ -979,27 +954,29 @@ function openComp(id){
 document.getElementById('mCompOk').addEventListener('click',()=>{
   const te=document.getElementById('mCompTime').value;
   if(!te){alert('กรุณาระบุเวลาสิ้นสุด');return;}
-  const l=_logs.find(x=>x.id===COMP_ID);
-  if(l){DB.writeLog({...l,timeEnd:te,status:'done',updatedAt:Date.now()});}
+  const logs=DB.logs();const i=logs.findIndex(l=>l.id===COMP_ID);
+  if(i>=0){logs[i].timeEnd=te;logs[i].status='done';logs[i].updatedAt=Date.now();}
+  DB.setLogs(logs);
   bootstrap.Modal.getInstance(document.getElementById('mComp')).hide();
-  COMP_ID=null;
+  renderHist();COMP_ID=null;
 });
 
-// ========== DELETE ==========
+// ===== DELETE =====
 function askDel(id,type){DEL_ID=id;DEL_TYPE=type;new bootstrap.Modal(document.getElementById('mCfm')).show();}
 document.getElementById('mCfmOk').addEventListener('click',()=>{
-  if(DEL_TYPE==='log')DB.deleteLog(DEL_ID);
-  else if(DEL_TYPE==='emp')DB.deleteEmp(DEL_ID);
-  else if(DEL_TYPE==='veh')DB.deleteVeh(DEL_ID);
+  if(DEL_TYPE==='log'){DB.setLogs(DB.logs().filter(l=>l.id!==DEL_ID));renderHist();}
+  else if(DEL_TYPE==='emp'){DB.setEmps(DB.emps().filter(e=>e.id!==DEL_ID));renderEmpTbl();}
+  else if(DEL_TYPE==='veh'){DB.setVehs(DB.vehs().filter(v=>v.id!==DEL_ID));renderVehTbl();}
   bootstrap.Modal.getInstance(document.getElementById('mCfm')).hide();
   DEL_ID=null;DEL_TYPE=null;
 });
 
-// ========== SUMMARY ==========
+// ===== SUMMARY =====
 function renderSum(){
-  const p=document.getElementById('sumP').value,dr=document.getElementById('sumD').value||new Date().toISOString().slice(0,10);
+  const p=document.getElementById('sumP').value;
+  const dr=document.getElementById('sumD').value||new Date().toISOString().slice(0,10);
   const d=new Date(dr);
-  const logs=_logs.filter(l=>{
+  const logs=DB.logs().filter(l=>{
     const ld=new Date(l.date);
     if(p==='day')return l.date===dr;
     if(p==='week'){const s=new Date(d);s.setDate(d.getDate()-d.getDay());const e=new Date(s);e.setDate(s.getDate()+6);return ld>=s&&ld<=e;}
@@ -1013,44 +990,50 @@ function renderSum(){
   document.getElementById('sumStats').innerHTML=types.map((t,i)=>`
     <div class="col-6 col-md-4" style="margin-bottom:4px;">
       <div class="sc" style="border-left-color:${clrs[i]};padding:13px 15px;">
-        <div class="sn" style="color:${clrs[i]};font-size:1.7rem;">${tc[i]}</div><div class="sl">${t}</div>
+        <div class="sn" style="color:${clrs[i]};font-size:1.7rem;">${tc[i]}</div>
+        <div class="sl">${t}</div>
       </div>
     </div>`).join('');
   if(sPie)sPie.destroy();
   sPie=new Chart(document.getElementById('chartPie').getContext('2d'),{
-    type:'doughnut',data:{labels:types.map(t=>t.length>14?t.slice(0,14)+'…':t),datasets:[{data:tc,backgroundColor:clrs.map(c=>c+'bb'),borderColor:clrs,borderWidth:2}]},
+    type:'doughnut',
+    data:{labels:types.map(t=>t.length>14?t.slice(0,14)+'…':t),datasets:[{data:tc,backgroundColor:clrs.map(c=>c+'bb'),borderColor:clrs,borderWidth:2}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
   });
   const dm={};logs.forEach(l=>{dm[l.date]=(dm[l.date]||0)+1;});const ds=Object.keys(dm).sort();
   if(sBar)sBar.destroy();
   sBar=new Chart(document.getElementById('chartBar').getContext('2d'),{
-    type:'bar',data:{labels:ds.map(d=>d.slice(5)),datasets:[{label:'ภารกิจ',data:ds.map(d=>dm[d]),backgroundColor:'#1e5bbcbb',borderColor:'#1e5bbc',borderWidth:2,borderRadius:4}]},
+    type:'bar',
+    data:{labels:ds.map(d=>d.slice(5)),datasets:[{label:'ภารกิจ',data:ds.map(d=>dm[d]),backgroundColor:'#1e5bbcbb',borderColor:'#1e5bbc',borderWidth:2,borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
   });
 }
 
-// ========== ADMIN ==========
+// ===== ADMIN =====
 function renderAdmin(){renderEmpTbl();renderVehTbl();}
 function swTab(tab,btn){
   document.querySelectorAll('.atab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
   ['emp','veh','exp'].forEach(t=>document.getElementById('aTab-'+t).style.display=t===tab?'block':'none');
 }
 function addEmp(){
-  const id=document.getElementById('eId').value.trim(),name=document.getElementById('eName').value.trim();
-  const pos=document.getElementById('ePos').value.trim(),pw=document.getElementById('ePw').value;
+  const id=document.getElementById('eId').value.trim();const name=document.getElementById('eName').value.trim();
+  const pos=document.getElementById('ePos').value.trim();const pw=document.getElementById('ePw').value;
   if(!id||!name||!pw){alert('กรุณากรอกรหัส ชื่อ และรหัสผ่าน');return;}
-  if(_emps.find(e=>e.id===id)){alert('รหัสนี้มีอยู่แล้ว');return;}
-  DB.writeEmp({id,name,pos,role:'user',pw});
+  const emps=DB.emps();if(emps.find(e=>e.id===id)){alert('รหัสนี้มีอยู่แล้ว');return;}
+  emps.push({id,name,pos,role:'user',pw});DB.setEmps(emps);
   ['eId','eName','ePos','ePw'].forEach(f=>document.getElementById(f).value='');
+  renderEmpTbl();
 }
 function renderEmpTbl(){
-  document.getElementById('empTbl').innerHTML=_emps.map(e=>`<tr>
-    <td><strong>${e.id}</strong></td><td>${e.name}</td><td>${e.pos||'-'}</td>
+  document.getElementById('empTbl').innerHTML=DB.emps().map(e=>`<tr>
+    <td><strong>${e.id}</strong></td>
+    <td id="td-name-${e.id}">${e.name}</td>
+    <td id="td-pos-${e.id}">${e.pos||'-'}</td>
     <td>${e.role==='admin'?`<span style="background:#fff3cd;color:#c87000;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;"><i class="fas fa-crown me-1"></i>Admin</span>`:
       `<span style="background:#e3f2fd;color:#1565c0;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;">User</span>`}</td>
     <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
       ${e.role!=='admin'?`<button class="btn btn-sm btn-warning" onclick="setAdm('${e.id}')"><i class="fas fa-crown"></i> ตั้งAdmin</button>`:
-        `<button class="btn btn-sm btn-secondary" onclick="rmAdm('${e.id}')" ${e.id===CU.id?'disabled':''}> ถอดAdmin</button>`}
+        `<button class="btn btn-sm btn-secondary" onclick="rmAdm('${e.id}')" ${e.id===CU.id?'disabled':''}>ถอดAdmin</button>`}
       <button class="btn btn-sm btn-outline-primary" onclick="editEmp('${e.id}')"><i class="fas fa-edit"></i></button>
       <button class="btn btn-sm btn-outline-secondary" onclick="rstPw('${e.id}')"><i class="fas fa-key"></i></button>
       ${e.id!==CU.id?`<button class="btn btn-sm btn-outline-danger" onclick="askDel('${e.id}','emp')"><i class="fas fa-trash"></i></button>`:''}
@@ -1058,56 +1041,59 @@ function renderEmpTbl(){
   </tr>`).join('');
 }
 function editEmp(id){
-  const e=_emps.find(x=>x.id===id);if(!e)return;
-  const newName=prompt('แก้ไขชื่อ-นามสกุล:',e.name);if(newName===null)return;
-  const newPos=prompt('แก้ไขตำแหน่ง:',e.pos||'');if(newPos===null)return;
-  const updated={...e,name:newName.trim()||e.name,pos:newPos.trim()};
-  DB.writeEmp(updated);
-  if(CU.id===id){CU=updated;buildSB();}
+  const emps=DB.emps();const e=emps.find(x=>x.id===id);if(!e)return;
+  const newName=prompt('แก้ไขชื่อ-นามสกุล:',e.name);
+  if(newName===null)return;
+  const newPos=prompt('แก้ไขตำแหน่ง:',e.pos||'');
+  if(newPos===null)return;
+  e.name=newName.trim()||e.name;
+  e.pos=newPos.trim();
+  DB.setEmps(emps);
+  if(CU.id===id){CU.name=e.name;CU.pos=e.pos;buildSB();}
+  renderEmpTbl();
 }
-function setAdm(id){const e=_emps.find(x=>x.id===id);if(e)DB.writeEmp({...e,role:'admin'});}
+function setAdm(id){const emps=DB.emps();const e=emps.find(x=>x.id===id);if(e){e.role='admin';DB.setEmps(emps);renderEmpTbl();}}
 function rmAdm(id){
-  if(_emps.filter(e=>e.role==='admin').length<=1){alert('ต้องมีแอดมินอย่างน้อย 1 คน');return;}
-  const e=_emps.find(x=>x.id===id);if(e)DB.writeEmp({...e,role:'user'});
+  if(DB.emps().filter(e=>e.role==='admin').length<=1){alert('ต้องมีแอดมินอย่างน้อย 1 คน');return;}
+  const emps=DB.emps();const e=emps.find(x=>x.id===id);if(e){e.role='user';DB.setEmps(emps);renderEmpTbl();}
 }
-function rstPw(id){
-  const pw=prompt('รหัสผ่านใหม่:');if(!pw)return;
-  const e=_emps.find(x=>x.id===id);if(e){DB.writeEmp({...e,pw});alert('รีเซ็ตสำเร็จ');}
-}
+function rstPw(id){const pw=prompt('รหัสผ่านใหม่:');if(!pw)return;const emps=DB.emps();const e=emps.find(x=>x.id===id);if(e){e.pw=pw;DB.setEmps(emps);alert('รีเซ็ตสำเร็จ');}}
 function addVeh(){
-  const plate=document.getElementById('vPlate').value.trim(),brand=document.getElementById('vBrand').value.trim(),model=document.getElementById('vModel').value.trim();
+  const plate=document.getElementById('vPlate').value.trim();const brand=document.getElementById('vBrand').value.trim();const model=document.getElementById('vModel').value.trim();
   if(!plate){alert('กรุณากรอกทะเบียนรถ');return;}
-  DB.writeVeh({id:'v'+Date.now(),plate,brand,model});
-  ['vPlate','vBrand','vModel'].forEach(f=>document.getElementById(f).value='');
+  const vehs=DB.vehs();vehs.push({id:'v'+Date.now(),plate,brand,model});DB.setVehs(vehs);
+  ['vPlate','vBrand','vModel'].forEach(f=>document.getElementById(f).value='');renderVehTbl();
 }
 function renderVehTbl(){
   const bids=busyVehIds();
-  document.getElementById('vehTbl').innerHTML=_vehs.map(v=>{
+  document.getElementById('vehTbl').innerHTML=DB.vehs().map(v=>{
     const busy=bids.includes(v.id);
-    return `<tr><td><strong>${v.plate}</strong></td><td>${v.brand||'-'}</td><td>${v.model||'-'}</td>
+    return `<tr>
+      <td><strong>${v.plate}</strong></td><td>${v.brand||'-'}</td><td>${v.model||'-'}</td>
       <td><span style="background:${busy?'#ffebee':'#e8f5e9'};color:${busy?'var(--red)':'var(--green)'};padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;">${busy?'กำลังใช้งาน':'พร้อมใช้'}</span></td>
       <td><button class="br" onclick="askDel('${v.id}','veh')" style="font-size:.73rem;padding:4px 9px;"><i class="fas fa-trash"></i></button></td>
     </tr>`;
   }).join('');
 }
 
-// ========== EXPORT ==========
+// ===== EXPORT =====
 function expCSV(){
+  const logs=DB.logs();
   const hd=['ID','วันที่','เริ่ม','สิ้นสุด','ระยะเวลา','ประเภท','สถานที่','พนักงาน','รถ','ทีม','รายละเอียด','ปัญหา','การแก้ไข','Lat','Lng','สถานะ'];
-  const rows=_logs.map(l=>[l.id,l.date,l.timeStart||'',l.timeEnd||'',
-    l.timeEnd&&l.timeStart?calcDur(l.timeStart,l.timeEnd):'',l.type||'',l.place||'',l.empName||'',
-    l.vehInfo||'',(l.teamNames||[]).join('|'),l.detail||'',l.problem||'',l.solution||'',
+  const rows=logs.map(l=>[l.id,l.date,l.timeStart||'',l.timeEnd||'',
+    l.timeEnd&&l.timeStart?calcDur(l.timeStart,l.timeEnd):'',
+    l.type||'',l.place||'',l.empName||'',l.vehInfo||'',(l.teamNames||[]).join('|'),
+    l.detail||'',l.problem||'',l.solution||'',
     l.gps?l.gps.lat:'',l.gps?l.gps.lng:'',l.status==='done'?'เสร็จสิ้น':'กำลังดำเนินการ'
   ].map(v=>`"${String(v).replace(/"/g,'""')}"`));
-  dlFile('﻿'+[hd.join(','),...rows.map(r=>r.join(','))].join('
-'),'report_'+td()+'.csv','text/csv');
+  dlFile('\uFEFF'+[hd.join(','),...rows.map(r=>r.join(','))].join('\n'),'report_'+td()+'.csv','text/csv');
 }
-function expJSON(){dlFile(JSON.stringify(_logs,null,2),'report_'+td()+'.json','application/json');}
-function expBackup(){dlFile(JSON.stringify({emps:_emps.map(e=>({...e,pw:'[hidden]'})),vehs:_vehs,logs:_logs,at:new Date().toISOString()},null,2),'backup_'+td()+'.json','application/json');}
+function expJSON(){dlFile(JSON.stringify(DB.logs(),null,2),'report_'+td()+'.json','application/json');}
+function expBackup(){dlFile(JSON.stringify({emps:DB.emps().map(e=>({...e,pw:'[hidden]'})),vehs:DB.vehs(),logs:DB.logs(),at:new Date().toISOString()},null,2),'backup_'+td()+'.json','application/json');}
 function dlFile(c,n,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:m}));a.download=n;a.click();}
 function td(){return new Date().toISOString().slice(0,10);}
 
-// ========== PROFILE ==========
+// ===== PROFILE =====
 function renderProf(){
   const u=CU;
   document.getElementById('profInfo').innerHTML=`<div class="row g-2">
@@ -1117,20 +1103,20 @@ function renderProf(){
       <div style="font-weight:700;">${v}</div>
     </div></div>`).join('')}
     <div class="col-12"><div style="background:#e8f5e9;border-radius:var(--rs);padding:9px 11px;font-size:.8rem;color:var(--green);">
-      ภารกิจทั้งหมด: <strong>${_logs.filter(l=>l.empId===u.id).length} รายการ</strong>
+      ภารกิจทั้งหมด: <strong>${DB.logs().filter(l=>l.empId===u.id).length} รายการ</strong>
     </div></div>
   </div>`;
 }
 function chgPw(){
   const pw=document.getElementById('profPw').value;
   if(!pw||pw.length<4){document.getElementById('profMsg').innerHTML='<div style="color:var(--red);font-size:.83rem;">รหัสผ่านต้องมีอย่างน้อย 4 ตัว</div>';return;}
-  const e=_emps.find(x=>x.id===CU.id);if(e){DB.writeEmp({...e,pw});CU={...CU,pw};}
+  const emps=DB.emps();const e=emps.find(x=>x.id===CU.id);if(e){e.pw=pw;DB.setEmps(emps);CU.pw=pw;}
   document.getElementById('profPw').value='';
   document.getElementById('profMsg').innerHTML='<div style="color:var(--green);font-size:.83rem;"><i class="fas fa-check-circle me-1"></i>เปลี่ยนรหัสผ่านสำเร็จ</div>';
 }
 
-// ========== HELPERS ==========
-function getEmpName(id){const e=_emps.find(x=>x.id===id);return e?e.name:id;}
+// ===== HELPERS =====
+function getEmpName(id){const e=DB.emps().find(x=>x.id===id);return e?e.name:id;}
 function typeBadge(t){
   if(!t)return '';
   if(t.includes('อัคคีภัย'))return 'bt-fire';
@@ -1140,8 +1126,78 @@ function typeBadge(t){
   return 'bt-other';
 }
 
-// ========== INIT ==========
+// ===== INIT =====
+initData();
 document.getElementById('sumD').value=new Date().toISOString().slice(0,10);
+const sc=sessionStorage.getItem('cu');
+if(sc){const e=DB.emps().find(x=>x.id===sc);if(e){CU=e;bootApp();}}
 </script>
+<!-- ===== FIREBASE REALTIME DATABASE AUTO SYNC ===== -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, onValue } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+/* ==============================
+   🔥 Firebase Config ของคุณ
+================================= */
+const firebaseConfig = {
+  databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* ==============================
+   🚀 AUTO SYNC localStorage
+   (ไม่แก้โค้ดเดิมของคุณ)
+================================= */
+
+// ดัก localStorage.setItem เดิม
+const originalSetItem = localStorage.setItem;
+
+localStorage.setItem = function (key, value) {
+
+  // บันทึกแบบเดิมก่อน
+  originalSetItem.apply(this, arguments);
+
+  try {
+    const parsed = JSON.parse(value);
+    set(ref(db, key), parsed); // ส่งขึ้น Firebase
+    console.log("☁️ Sync to Firebase:", key);
+  } catch (e) {}
+};
+
+// โหลดข้อมูลจาก Firebase ลง localStorage
+function syncFromFirebase(key) {
+
+  const dbRef = ref(db, key);
+
+  onValue(dbRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      originalSetItem.call(localStorage, key, JSON.stringify(data));
+      console.log("⬇️ Synced from Firebase:", key);
+    }
+  });
+}
+
+/* ==============================
+   🔑 ใส่ชื่อ key ที่ระบบคุณใช้
+   (ถ้าไม่แน่ใจ ปล่อยไว้แบบนี้ได้เลย)
+================================= */
+
+syncFromFirebase("missions");
+syncFromFirebase("users");
+syncFromFirebase("vehicles");
+syncFromFirebase("logs");
+syncFromFirebase("reports");
+
+</script>
+<!-- ===== END FIREBASE ===== -->
+
+
+
 </body>
 </html>
