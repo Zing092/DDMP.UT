@@ -1167,16 +1167,15 @@ if(sc){const e=DB.emps().find(x=>x.id===sc);if(e){CU=e;bootApp();}}
     } 
     // 🔥 ใส่ config ของคุณตรงนี้
     const firebaseConfig = {
-      apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
+  apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
   authDomain: "ddpmut.firebaseapp.com",
-  import { getFirestore } from "firebase-firestore.js": "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "ddpmut",
   storageBucket: "ddpmut.firebasestorage.app",
   messagingSenderId: "320849690442",
   appId: "1:320849690442:web:70f3baef23bfe21093cbb3",
-   measurementId: "G-KS39RKPVJ5"
- 
-    };
+  measurementId: "G-KS39RKPVJ5"
+};
 
     const app = initializeApp(firebaseConfig);
    const analytics = getAnalytics(app);
