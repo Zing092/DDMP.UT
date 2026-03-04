@@ -3,22 +3,656 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ฟอร์มบันทึกการปฏิบัติงานประจำวัน</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>ฟอร์มบันทึกการปฏิบัติงานประจำวัน - กองป้องกันฯ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --primary: #1a3a5c;
+  --primary-light: #2563a8;
+  --accent: #e63946;
+  --accent2: #f4a261;
+  --success: #2a9d8f;
+  --warning: #e9c46a;
+  --bg: #f0f4f8;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --muted: #6c757d;
+  --border: #dee2e6;
+  --sidebar-w: 260px;
+}
+* { box-sizing: border-box; }
+body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; }
+h1,h2,h3,h4,h5,.brand { font-family: 'Kanit', sans-serif; }
 
-<!-- Firebase -->
+/* AUTH */
+#authScreen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a3a5c 0%, #2563a8 50%, #1a3a5c 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-card {
+  background: white; border-radius: 20px; padding: 40px; width: 100%; max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.auth-logo { text-align: center; margin-bottom: 30px; }
+.auth-logo .shield { font-size: 56px; color: var(--primary); }
+.auth-logo h2 { color: var(--primary); margin: 10px 0 4px; font-size: 1.4rem; }
+.auth-logo p { color: var(--muted); font-size: 0.9rem; margin: 0; }
+
+/* LAYOUT */
+#appScreen { display: none; min-height: 100vh; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
+  background: var(--primary); color: white; overflow-y: auto; z-index: 1000;
+  display: flex; flex-direction: column;
+  transition: transform 0.3s;
+}
+.sidebar-brand { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-brand .brand { font-size: 1rem; font-weight: 600; }
+.sidebar-brand .subtitle { font-size: 0.75rem; opacity: 0.7; }
+.sidebar-user { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-user .uname { font-weight: 600; font-size: 0.9rem; }
+.sidebar-user .urole { font-size: 0.75rem; opacity: 0.7; }
+.sidebar-user .uavatar { width: 40px; height: 40px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; }
+.nav-menu { padding: 10px 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; cursor: pointer; transition: background 0.2s; font-size: 0.9rem; border-left: 3px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.1); }
+.nav-item.active { background: rgba(255,255,255,0.15); border-left-color: var(--accent2); color: var(--accent2); }
+.nav-item i { width: 20px; text-align: center; }
+.nav-section { padding: 8px 20px 4px; font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+.main-content { margin-left: var(--sidebar-w); padding: 24px; min-height: 100vh; }
+.topbar { display: flex; align-items: center; justify-content: between; margin-bottom: 24px; gap: 12px; }
+.page-title { font-size: 1.5rem; font-weight: 600; color: var(--primary); flex: 1; }
+
+/* CARDS */
+.card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+.card-header-custom { background: var(--primary); color: white; padding: 14px 20px; border-radius: 12px 12px 0 0; font-family: 'Kanit', sans-serif; font-weight: 500; }
+.stat-card { border-radius: 12px; padding: 20px; color: white; }
+.stat-card.blue { background: linear-gradient(135deg, #2563a8, #1a3a5c); }
+.stat-card.red { background: linear-gradient(135deg, #e63946, #c1121f); }
+.stat-card.green { background: linear-gradient(135deg, #2a9d8f, #1b7a6e); }
+.stat-card.orange { background: linear-gradient(135deg, #f4a261, #e07d3a); }
+.stat-card .stat-num { font-size: 2rem; font-weight: 700; font-family: 'Kanit'; }
+.stat-card .stat-label { font-size: 0.85rem; opacity: 0.85; }
+
+/* FORM */
+.form-label { font-weight: 500; font-size: 0.9rem; color: var(--primary); }
+.form-control, .form-select { border-radius: 8px; border: 1.5px solid var(--border); font-size: 0.9rem; font-family: 'Sarabun', sans-serif; }
+.form-control:focus, .form-select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(37,99,168,0.15); }
+.btn-primary-custom { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 10px 24px; font-family: 'Kanit'; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
+.btn-primary-custom:hover { background: var(--primary-light); transform: translateY(-1px); }
+.btn-danger-custom { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-family: 'Kanit'; font-size: 0.9rem; cursor: pointer; }
+.btn-success-custom { background: var(--success); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-family: 'Kanit'; font-size: 0.9rem; cursor: pointer; }
+.section-divider { border: none; border-top: 2px solid var(--bg); margin: 20px 0; }
+
+/* CHECKLIST */
+.team-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.team-checkbox-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg); border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+.team-checkbox-item:hover { background: #dbe4f0; }
+.team-checkbox-item input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+/* HISTORY */
+.history-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--primary-light); transition: box-shadow 0.2s; cursor: pointer; }
+.history-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.history-card.fire { border-left-color: var(--accent); }
+.history-card.water { border-left-color: #219ebc; }
+.history-card.accident { border-left-color: var(--accent2); }
+.history-card.search { border-left-color: var(--success); }
+.badge-type { padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+.badge-fire { background: #fde8ea; color: var(--accent); }
+.badge-water { background: #dff0f7; color: #219ebc; }
+.badge-accident { background: #fef3e2; color: #e07d3a; }
+.badge-search { background: #d8f4f0; color: var(--success); }
+.badge-other { background: #e9ecef; color: #495057; }
+.badge-complete { background: #d8f4f0; color: var(--success); }
+.badge-inprogress { background: #fff3cd; color: #856404; }
+
+/* GPS */
+.gps-box { background: linear-gradient(135deg, #e8f4fd, #dbeafe); border: 1.5px solid #93c5fd; border-radius: 10px; padding: 14px; }
+.gps-coords { font-family: monospace; font-size: 0.85rem; color: var(--primary); background: white; border-radius: 6px; padding: 8px 12px; margin-top: 8px; }
+
+/* IMAGE UPLOAD */
+.image-upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+.image-upload-area:hover, .image-upload-area.dragover { border-color: var(--primary-light); background: #f0f7ff; }
+.image-preview-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.preview-img-wrap { position: relative; }
+.preview-img-wrap img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); }
+.preview-img-wrap .remove-img { position: absolute; top: -6px; right: -6px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: white; border-radius: 16px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.modal-box-sm { max-width: 450px; }
+.modal-header-custom { background: var(--primary); color: white; padding: 18px 24px; border-radius: 16px 16px 0 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-close { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; opacity: 0.8; }
+.modal-close:hover { opacity: 1; }
+.modal-body-custom { padding: 24px; }
+.lightbox-img { width: 100%; border-radius: 8px; cursor: zoom-in; }
+
+/* TABLE */
+.table-custom { font-size: 0.875rem; }
+.table-custom th { background: var(--primary); color: white; font-family: 'Kanit'; font-weight: 500; border: none; }
+.table-custom td { vertical-align: middle; }
+
+/* AVAILABLE STATUS */
+.avail-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
+.avail-badge.avail { background: #d8f4f0; color: var(--success); }
+.avail-badge.busy { background: #fde8ea; color: var(--accent); }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; right: 24px; z-index: 99999; }
+.toast-item { background: var(--primary); color: white; padding: 12px 20px; border-radius: 10px; margin-top: 8px; font-size: 0.9rem; box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; }
+.toast-item.success { background: var(--success); }
+.toast-item.error { background: var(--accent); }
+@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .hamburger { display: block !important; }
+}
+.hamburger { display: none; background: none; border: none; font-size: 1.4rem; color: var(--primary); cursor: pointer; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* SUMMARY CHARTS */
+.chart-container { position: relative; height: 300px; }
+.filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-tab { padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: white; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; font-family: 'Sarabun'; }
+.filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* VEHICLE / PUMP STATUS */
+.resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+.resource-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-top: 3px solid var(--success); }
+.resource-card.busy { border-top-color: var(--accent); opacity: 0.85; }
+.resource-card .rc-title { font-weight: 600; font-size: 0.9rem; color: var(--primary); }
+.resource-card .rc-sub { font-size: 0.8rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="shield"><i class="fas fa-shield-alt"></i></div>
+      <h2>กองป้องกันและบรรเทาสาธารณภัย</h2>
+      <p>ระบบบันทึกการปฏิบัติงานประจำวัน</p>
+    </div>
+    <div id="loginForm">
+      <div class="mb-3">
+        <label class="form-label">รหัสพนักงาน</label>
+        <input type="text" id="loginEmpId" class="form-control" placeholder="กรอกรหัสพนักงาน" maxlength="20">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">รหัสผ่าน</label>
+        <div class="input-group">
+          <input type="password" id="loginPassword" class="form-control" placeholder="กรอกรหัสผ่าน">
+          <button class="btn btn-outline-secondary" type="button" onclick="togglePwd('loginPassword')"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <button class="btn-primary-custom w-100 py-2" onclick="doLogin()"><i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ</button>
+      <p class="text-center mt-3 text-muted small">ติดต่อผู้ดูแลระบบหากลืมรหัสผ่าน</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appScreen">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-shield-alt fa-lg"></i>
+        <div>
+          <div class="brand">กองป้องกันฯ</div>
+          <div class="subtitle">ระบบปฏิบัติงาน</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="d-flex align-items-center gap-2">
+        <div class="uavatar" id="userAvatarSidebar">U</div>
+        <div>
+          <div class="uname" id="userNameSidebar">-</div>
+          <div class="urole" id="userRoleSidebar">-</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-menu">
+      <div class="nav-section">เมนูหลัก</div>
+      <div class="nav-item active" onclick="showPage('dashboard')"><i class="fas fa-tachometer-alt"></i> แดชบอร์ด</div>
+      <div class="nav-item" onclick="showPage('newReport')"><i class="fas fa-plus-circle"></i> บันทึกการปฏิบัติงาน</div>
+      <div class="nav-item" onclick="showPage('history')"><i class="fas fa-history"></i> ประวัติการปฏิบัติงาน</div>
+      <div class="nav-item" onclick="showPage('summary')"><i class="fas fa-chart-bar"></i> สรุปภารกิจ</div>
+      <div class="nav-section">ทรัพยากร</div>
+      <div class="nav-item" onclick="showPage('vehicles')"><i class="fas fa-truck"></i> รถปฏิบัติภารกิจ</div>
+      <div class="nav-item" onclick="showPage('pumps')"><i class="fas fa-water"></i> เครื่องสูบน้ำ</div>
+      <div class="nav-section admin-only" id="adminNavSection">ผู้ดูแลระบบ</div>
+      <div class="nav-item admin-only" id="adminNavManageUsers" onclick="showPage('adminUsers')"><i class="fas fa-users-cog"></i> จัดการพนักงาน</div>
+      <div class="nav-item admin-only" id="adminNavManageVehicles" onclick="showPage('adminVehicles')"><i class="fas fa-car-side"></i> จัดการรถ/เครื่องสูบ</div>
+    </div>
+    <div style="padding:16px 20px; border-top:1px solid rgba(255,255,255,0.1);">
+      <div class="nav-item" style="padding:8px 0;" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="page-title" id="pageTitle">แดชบอร์ด</div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportCSV()"><i class="fas fa-file-csv me-1"></i>CSV</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportJSON()"><i class="fas fa-file-code me-1"></i>JSON</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="pageDashboard">
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="stat-card blue"><div class="stat-num" id="statTotal">0</div><div class="stat-label"><i class="fas fa-clipboard-list me-1"></i>ภารกิจทั้งหมด</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card red"><div class="stat-num" id="statToday">0</div><div class="stat-label"><i class="fas fa-calendar-day me-1"></i>ภารกิจวันนี้</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card green"><div class="stat-num" id="statVehicleAvail">0</div><div class="stat-label"><i class="fas fa-truck me-1"></i>รถพร้อมใช้งาน</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card orange"><div class="stat-num" id="statPumpAvail">0</div><div class="stat-label"><i class="fas fa-water me-1"></i>เครื่องสูบพร้อมใช้</div></div></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header-custom"><i class="fas fa-history me-2"></i>ภารกิจล่าสุด</div>
+            <div class="card-body p-0" id="dashRecentList" style="max-height:380px;overflow-y:auto;">
+              <div class="text-center p-4 text-muted">ไม่มีข้อมูล</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header-custom"><i class="fas fa-chart-pie me-2"></i>ประเภทภารกิจวันนี้</div>
+            <div class="card-body"><div class="chart-container"><canvas id="dashPieChart"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW REPORT PAGE -->
+    <div class="page" id="pageNewReport">
+      <div class="card">
+        <div class="card-header-custom"><i class="fas fa-plus-circle me-2"></i>บันทึกการปฏิบัติงาน</div>
+        <div class="card-body p-4">
+
+          <!-- TIME -->
+          <h6 class="text-primary mb-3"><i class="fas fa-clock me-2"></i>การบันทึกเวลาปฏิบัติงาน</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">วันที่ปฏิบัติงาน <span class="text-danger">*</span></label>
+              <input type="date" id="fDate" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">เวลาเริ่มต้น <span class="text-danger">*</span></label>
+              <input type="time" id="fTimeStart" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">ประเภทภารกิจ <span class="text-danger">*</span></label>
+              <select id="fMissionType" class="form-select">
+                <option value="">-- เลือกประเภท --</option>
+                <option value="fire">🔥 งานอัคคีภัย</option>
+                <option value="water">🌊 งานกู้ภัยทางน้ำ</option>
+                <option value="accident">🚗 งานอุบัติเหตุ</option>
+                <option value="search">🔍 งานค้นหาผู้สูญหาย</option>
+                <option value="other">📋 งานอื่นๆ</option>
+              </select>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <!-- VEHICLE -->
+          <h6 class="text-primary mb-3"><i class="fas fa-truck me-2"></i>ข้อมูลรถปฏิบัติภารกิจ</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">รถปฏิบัติภารกิจ</label>
+              <select id="fVehicle" class="form-select">
+                <option value="">-- ไม่ใช้รถ --</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <button class="btn btn-outline-primary btn-sm" onclick="showAvailableVehicles()"><i class="fas fa-eye me-1"></i>ดูรถพร้อมใช้งาน</button>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <!-- PUMP -->
+          <h6 class="text-primary mb-3"><i class="fas fa-water me-2"></i>ข้อมูลเครื่องสูบน้ำ</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">เครื่องสูบน้ำ</label>
+              <select id="fPump" class="form-select">
+                <option value="">-- ไม่ใช้เครื่องสูบน้ำ --</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <button class="btn btn-outline-primary btn-sm" onclick="showAvailablePumps()"><i class="fas fa-eye me-1"></i>ดูเครื่องสูบพร้อมใช้งาน</button>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <!-- TEAM -->
+          <h6 class="text-primary mb-3"><i class="fas fa-users me-2"></i>รายชื่อทีมปฏิบัติภารกิจ</h6>
+          <div class="team-checkbox-grid mb-3" id="teamCheckboxGrid">
+            <div class="text-muted small">กำลังโหลด...</div>
+          </div>
+
+          <hr class="section-divider">
+          <!-- DETAILS -->
+          <h6 class="text-primary mb-3"><i class="fas fa-clipboard me-2"></i>รายละเอียดการปฏิบัติงาน</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">สถานที่ปฏิบัติงาน <span class="text-danger">*</span></label>
+              <input type="text" id="fLocation" class="form-control" placeholder="ระบุสถานที่">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">รายละเอียดงาน <span class="text-danger">*</span></label>
+              <input type="text" id="fDetail" class="form-control" placeholder="สรุปสั้นๆ">
+            </div>
+            <div class="col-12">
+              <label class="form-label">รายละเอียดงาน (เต็ม)</label>
+              <textarea id="fDetailFull" class="form-control" rows="3" placeholder="อธิบายรายละเอียดเพิ่มเติม..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">ปัญหาที่พบ (ถ้ามี)</label>
+              <textarea id="fProblem" class="form-control" rows="2" placeholder="ระบุปัญหาที่พบ..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">การแก้ไข / ข้อเสนอแนะ</label>
+              <textarea id="fSolution" class="form-control" rows="2" placeholder="การแก้ไขหรือข้อเสนอแนะ..."></textarea>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <!-- GPS -->
+          <h6 class="text-primary mb-3"><i class="fas fa-map-marker-alt me-2"></i>ตำแหน่ง GPS</h6>
+          <div class="gps-box mb-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <button class="btn-primary-custom" onclick="getGPS()"><i class="fas fa-crosshairs me-2"></i>เช็คอิน / รับพิกัด GPS</button>
+              <div id="gpsStatus" class="text-muted small">ยังไม่ได้รับพิกัด</div>
+            </div>
+            <div class="gps-coords" id="gpsCoordsDisplay" style="display:none;"></div>
+          </div>
+
+          <hr class="section-divider">
+          <!-- IMAGES -->
+          <h6 class="text-primary mb-3"><i class="fas fa-camera me-2"></i>แนบรูปภาพ</h6>
+          <div class="image-upload-area mb-2" id="uploadArea" onclick="document.getElementById('fImages').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+            <div class="text-muted">คลิกหรือลากไฟล์มาวางที่นี่</div>
+            <div class="text-muted small">รองรับ JPG, PNG, GIF (สูงสุด 5 ไฟล์)</div>
+          </div>
+          <input type="file" id="fImages" multiple accept="image/*" style="display:none" onchange="handleImages(this.files)">
+          <div class="image-preview-grid" id="imagePreviewGrid"></div>
+
+          <hr class="section-divider">
+          <div class="d-flex gap-3 justify-content-end">
+            <button class="btn btn-outline-secondary" onclick="resetForm()"><i class="fas fa-redo me-1"></i>รีเซ็ต</button>
+            <button class="btn-primary-custom" onclick="submitReport()"><i class="fas fa-save me-2"></i>บันทึกรายงาน</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="pageHistory">
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <input type="text" id="historySearch" class="form-control" style="max-width:260px" placeholder="ค้นหา...">
+        <select id="historyFilterType" class="form-select" style="max-width:180px" onchange="loadHistory()">
+          <option value="">ทุกประเภท</option>
+          <option value="fire">อัคคีภัย</option>
+          <option value="water">กู้ภัยทางน้ำ</option>
+          <option value="accident">อุบัติเหตุ</option>
+          <option value="search">ค้นหาผู้สูญหาย</option>
+          <option value="other">อื่นๆ</option>
+        </select>
+        <input type="date" id="historyFilterDate" class="form-control" style="max-width:160px" onchange="loadHistory()">
+        <button class="btn btn-outline-primary btn-sm" onclick="loadHistory()"><i class="fas fa-search me-1"></i>ค้นหา</button>
+      </div>
+      <div id="historyList"><div class="text-center p-4 text-muted">กำลังโหลด...</div></div>
+    </div>
+
+    <!-- SUMMARY PAGE -->
+    <div class="page" id="pageSummary">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setSummaryFilter('day',this)">รายวัน</button>
+        <button class="filter-tab" onclick="setSummaryFilter('week',this)">รายสัปดาห์</button>
+        <button class="filter-tab" onclick="setSummaryFilter('month',this)">รายเดือน</button>
+        <button class="filter-tab" onclick="setSummaryFilter('year',this)">รายปี</button>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-7">
+          <div class="card">
+            <div class="card-header-custom"><i class="fas fa-chart-bar me-2"></i>จำนวนภารกิจตามประเภท</div>
+            <div class="card-body"><div class="chart-container"><canvas id="summaryBarChart"></canvas></div></div>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="card">
+            <div class="card-header-custom"><i class="fas fa-chart-pie me-2"></i>สัดส่วนประเภทภารกิจ</div>
+            <div class="card-body"><div class="chart-container"><canvas id="summaryPieChart"></canvas></div></div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header-custom"><i class="fas fa-chart-line me-2"></i>ภารกิจตามช่วงเวลา</div>
+            <div class="card-body"><div class="chart-container"><canvas id="summaryLineChart"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VEHICLES PAGE -->
+    <div class="page" id="pageVehicles">
+      <div class="row g-3 mb-3">
+        <div class="col-auto"><div class="stat-card blue p-3"><div class="stat-num" id="vTotalCount">0</div><div class="stat-label">รถทั้งหมด</div></div></div>
+        <div class="col-auto"><div class="stat-card green p-3"><div class="stat-num" id="vAvailCount">0</div><div class="stat-label">พร้อมใช้</div></div></div>
+        <div class="col-auto"><div class="stat-card red p-3"><div class="stat-num" id="vBusyCount">0</div><div class="stat-label">กำลังใช้งาน</div></div></div>
+      </div>
+      <div class="resource-grid" id="vehicleStatusGrid"><div class="text-muted">กำลังโหลด...</div></div>
+    </div>
+
+    <!-- PUMPS PAGE -->
+    <div class="page" id="pagePumps">
+      <div class="row g-3 mb-3">
+        <div class="col-auto"><div class="stat-card blue p-3"><div class="stat-num" id="pTotalCount">0</div><div class="stat-label">เครื่องสูบทั้งหมด</div></div></div>
+        <div class="col-auto"><div class="stat-card green p-3"><div class="stat-num" id="pAvailCount">0</div><div class="stat-label">พร้อมใช้</div></div></div>
+        <div class="col-auto"><div class="stat-card red p-3"><div class="stat-num" id="pBusyCount">0</div><div class="stat-label">กำลังใช้งาน</div></div></div>
+      </div>
+      <div class="resource-grid" id="pumpStatusGrid"><div class="text-muted">กำลังโหลด...</div></div>
+    </div>
+
+    <!-- ADMIN: USERS PAGE -->
+    <div class="page" id="pageAdminUsers">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="mb-0">จัดการพนักงาน</h5>
+        <button class="btn-primary-custom" onclick="showAddUserModal()"><i class="fas fa-user-plus me-1"></i>เพิ่มพนักงาน</button>
+      </div>
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-custom table-hover mb-0">
+              <thead>
+                <tr><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>สิทธิ์</th><th>จัดการ</th></tr>
+              </thead>
+              <tbody id="usersTableBody"><tr><td colspan="5" class="text-center p-3 text-muted">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN: VEHICLES/PUMPS PAGE -->
+    <div class="page" id="pageAdminVehicles">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="fas fa-truck me-2"></i>จัดการรถ</h5>
+            <button class="btn-primary-custom btn-sm" onclick="showAddVehicleModal()"><i class="fas fa-plus me-1"></i>เพิ่มรถ</button>
+          </div>
+          <div class="card">
+            <div class="card-body p-0">
+              <table class="table table-custom table-hover mb-0">
+                <thead><tr><th>ทะเบียน</th><th>ยี่ห้อ/รุ่น</th><th>จัดการ</th></tr></thead>
+                <tbody id="vehiclesTableBody"><tr><td colspan="3" class="text-center p-3 text-muted">กำลังโหลด...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="fas fa-water me-2"></i>จัดการเครื่องสูบน้ำ</h5>
+            <button class="btn-primary-custom btn-sm" onclick="showAddPumpModal()"><i class="fas fa-plus me-1"></i>เพิ่มเครื่องสูบ</button>
+          </div>
+          <div class="card">
+            <div class="card-body p-0">
+              <table class="table table-custom table-hover mb-0">
+                <thead><tr><th>เลขครุภัณฑ์</th><th>ยี่ห้อ/รุ่น</th><th>จัดการ</th></tr></thead>
+                <tbody id="pumpsTableBody"><tr><td colspan="3" class="text-center p-3 text-muted">กำลังโหลด...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content -->
+</div><!-- end appScreen -->
+
+<!-- MODALS -->
+<!-- Report Detail Modal -->
+<div class="modal-overlay" id="reportDetailModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span><i class="fas fa-clipboard-list me-2"></i>รายละเอียดภารกิจ</span>
+      <button class="modal-close" onclick="closeModal('reportDetailModal')">✕</button>
+    </div>
+    <div class="modal-body-custom" id="reportDetailBody"></div>
+  </div>
+</div>
+
+<!-- Image Lightbox -->
+<div class="modal-overlay" id="lightboxModal">
+  <div class="modal-box" style="max-width:90vw;background:transparent;box-shadow:none;">
+    <div style="text-align:right;"><button class="modal-close" style="background:rgba(0,0,0,0.5);border-radius:50%;width:36px;height:36px;" onclick="closeModal('lightboxModal')">✕</button></div>
+    <img id="lightboxImg" src="" style="max-width:100%;max-height:85vh;border-radius:12px;display:block;margin:auto;">
+  </div>
+</div>
+
+<!-- Available Vehicles Modal -->
+<div class="modal-overlay" id="availVehiclesModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom"><span><i class="fas fa-truck me-2"></i>รถพร้อมใช้งาน</span><button class="modal-close" onclick="closeModal('availVehiclesModal')">✕</button></div>
+    <div class="modal-body-custom" id="availVehiclesBody"></div>
+  </div>
+</div>
+
+<!-- Available Pumps Modal -->
+<div class="modal-overlay" id="availPumpsModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom"><span><i class="fas fa-water me-2"></i>เครื่องสูบน้ำพร้อมใช้งาน</span><button class="modal-close" onclick="closeModal('availPumpsModal')">✕</button></div>
+    <div class="modal-body-custom" id="availPumpsBody"></div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom"><span id="addUserModalTitle"><i class="fas fa-user-plus me-2"></i>เพิ่มพนักงาน</span><button class="modal-close" onclick="closeModal('addUserModal')">✕</button></div>
+    <div class="modal-body-custom">
+      <input type="hidden" id="editUserId">
+      <div class="mb-3"><label class="form-label">รหัสพนักงาน <span class="text-danger">*</span></label><input type="text" id="newEmpId" class="form-control" placeholder="เช่น EMP001"></div>
+      <div class="mb-3"><label class="form-label">ชื่อ-สกุล <span class="text-danger">*</span></label><input type="text" id="newEmpName" class="form-control" placeholder="ชื่อ-สกุล"></div>
+      <div class="mb-3"><label class="form-label">ตำแหน่ง</label><input type="text" id="newEmpPosition" class="form-control" placeholder="ตำแหน่ง"></div>
+      <div class="mb-3"><label class="form-label">รหัสผ่าน</label><input type="password" id="newEmpPassword" class="form-control" placeholder="ตั้งรหัสผ่าน"></div>
+      <div class="mb-3"><label class="form-label">สิทธิ์</label>
+        <select id="newEmpRole" class="form-select"><option value="user">พนักงาน (User)</option><option value="admin">ผู้ดูแลระบบ (Admin)</option></select>
+      </div>
+      <button class="btn-primary-custom w-100" onclick="saveUser()"><i class="fas fa-save me-1"></i>บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Vehicle Modal -->
+<div class="modal-overlay" id="addVehicleModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom"><span id="addVehicleTitle"><i class="fas fa-truck me-2"></i>เพิ่มรถ</span><button class="modal-close" onclick="closeModal('addVehicleModal')">✕</button></div>
+    <div class="modal-body-custom">
+      <input type="hidden" id="editVehicleId">
+      <div class="mb-3"><label class="form-label">เลขทะเบียน <span class="text-danger">*</span></label><input type="text" id="vPlate" class="form-control" placeholder="เช่น กข-1234"></div>
+      <div class="mb-3"><label class="form-label">ยี่ห้อ</label><input type="text" id="vBrand" class="form-control" placeholder="ยี่ห้อ"></div>
+      <div class="mb-3"><label class="form-label">รุ่น</label><input type="text" id="vModel" class="form-control" placeholder="รุ่น"></div>
+      <div class="mb-3"><label class="form-label">ประเภท</label><input type="text" id="vType" class="form-control" placeholder="เช่น รถดับเพลิง, รถกู้ภัย"></div>
+      <button class="btn-primary-custom w-100" onclick="saveVehicle()"><i class="fas fa-save me-1"></i>บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Pump Modal -->
+<div class="modal-overlay" id="addPumpModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom"><span id="addPumpTitle"><i class="fas fa-water me-2"></i>เพิ่มเครื่องสูบน้ำ</span><button class="modal-close" onclick="closeModal('addPumpModal')">✕</button></div>
+    <div class="modal-body-custom">
+      <input type="hidden" id="editPumpId">
+      <div class="mb-3"><label class="form-label">เลขทะเบียนครุภัณฑ์ <span class="text-danger">*</span></label><input type="text" id="pAssetNo" class="form-control" placeholder="เลขครุภัณฑ์"></div>
+      <div class="mb-3"><label class="form-label">ยี่ห้อ</label><input type="text" id="pBrand" class="form-control" placeholder="ยี่ห้อ"></div>
+      <div class="mb-3"><label class="form-label">รุ่น</label><input type="text" id="pModel" class="form-control" placeholder="รุ่น"></div>
+      <button class="btn-primary-custom w-100" onclick="savePump()"><i class="fas fa-save me-1"></i>บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div class="modal-overlay" id="confirmDeleteModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom" style="background:var(--accent);"><span><i class="fas fa-trash me-2"></i>ยืนยันการลบ</span><button class="modal-close" onclick="closeModal('confirmDeleteModal')">✕</button></div>
+    <div class="modal-body-custom text-center">
+      <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3 d-block"></i>
+      <p id="confirmDeleteText">คุณต้องการลบรายการนี้ใช่หรือไม่?</p>
+      <div class="d-flex gap-3 justify-content-center mt-3">
+        <button class="btn btn-outline-secondary" onclick="closeModal('confirmDeleteModal')">ยกเลิก</button>
+        <button class="btn-danger-custom" id="confirmDeleteBtn">ลบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- End Mission Modal -->
+<div class="modal-overlay" id="endMissionModal">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header-custom" style="background:var(--success);"><span><i class="fas fa-flag-checkered me-2"></i>จบภารกิจ</span><button class="modal-close" onclick="closeModal('endMissionModal')">✕</button></div>
+    <div class="modal-body-custom">
+      <div class="mb-3"><label class="form-label">เวลาสิ้นสุดภารกิจ</label><input type="time" id="endMissionTime" class="form-control"></div>
+      <div id="endMissionSummary" class="alert alert-info" style="display:none;"></div>
+      <div class="d-flex gap-3 justify-content-end">
+        <button class="btn btn-outline-secondary" onclick="closeModal('endMissionModal')">ยกเลิก</button>
+        <button class="btn-success-custom" id="confirmEndMissionBtn"><i class="fas fa-check me-1"></i>ยืนยันจบภารกิจ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- Firebase SDKs -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, get, push, update, remove, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-  // ===== FIREBASE CONFIG — แก้ไขค่าด้านล่างให้ตรงกับโปรเจกต์ Firebase ของคุณ =====
-  const firebaseConfig = {
-    apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
+const firebaseConfig = {
+  apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
   authDomain: "ddpmut.firebaseapp.com",
   databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "ddpmut",
@@ -26,2163 +660,899 @@
   messagingSenderId: "320849690442",
   appId: "1:320849690442:web:70f3baef23bfe21093cbb3",
   measurementId: "G-KS39RKPVJ5"
-  };
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  window._fb = { auth, db, storage, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, setDoc, getDoc, serverTimestamp, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, ref, uploadBytes, getDownloadURL, deleteObject };
+// ========== STATE ==========
+let currentUser = null;
+let allReports = {};
+let allUsers = {};
+let allVehicles = {};
+let allPumps = {};
+let selectedImages = [];
+let gpsData = null;
+let summaryFilter = 'month';
+let dashPieChartInst = null;
+let summaryBarChartInst = null;
+let summaryPieChartInst = null;
+let summaryLineChartInst = null;
 
-  // Global state
-  window.appState = {
-    currentUser: null,
-    currentUserData: null,
-    employees: [],
-    vehicles: [],
-    pumps: [],
-    reports: [],
-    chart: null
-  };
-
-  // Auth state observer
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        window.appState.currentUser = user;
-        window.appState.currentUserData = { id: user.uid, ...userDoc.data() };
-        window.initApp();
-      } else {
-        await signOut(auth);
-        window.showLoginPage();
-      }
-    } else {
-      window.appState.currentUser = null;
-      window.appState.currentUserData = null;
-      window.showLoginPage();
-    }
-  });
-</script>
-
-<style>
-:root {
-  --primary: #1a3a5c;
-  --primary-light: #2563a8;
-  --accent: #f97316;
-  --accent2: #0ea5e9;
-  --danger: #dc2626;
-  --success: #16a34a;
-  --warning: #d97706;
-  --bg: #f0f4f8;
-  --card: #ffffff;
-  --text: #1e293b;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --sidebar-w: 260px;
+// ========== UTILS ==========
+function toast(msg, type='') {
+  const t = document.createElement('div');
+  t.className = 'toast-item ' + type;
+  t.innerHTML = msg;
+  document.getElementById('toast').appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
 }
 
-* { box-sizing: border-box; }
-body {
-  font-family: 'Sarabun', 'IBM Plex Sans Thai', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  margin: 0;
-  min-height: 100vh;
+function formatDateTime(dateStr, timeStr) {
+  if (!dateStr) return '-';
+  return `${dateStr} ${timeStr||''}`.trim();
 }
 
-/* ===== AUTH PAGE ===== */
-#auth-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f2744 0%, #1a3a5c 50%, #0c4a6e 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.auth-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2.5rem;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-}
-.auth-logo {
-  width: 72px;
-  height: 72px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  font-size: 2rem;
-  color: white;
-}
-.auth-title {
-  text-align: center;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 0.25rem;
-}
-.auth-subtitle {
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin-bottom: 2rem;
-}
-
-/* ===== MAIN APP ===== */
-#app-page { display: none; }
-#app-page.active { display: flex; min-height: 100vh; }
-
-/* Sidebar */
-.sidebar {
-  width: var(--sidebar-w);
-  background: linear-gradient(180deg, #0f2744 0%, #1a3a5c 100%);
-  min-height: 100vh;
-  position: fixed;
-  left: 0; top: 0;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s;
-}
-.sidebar-logo {
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.sidebar-logo .logo-icon {
-  width: 42px; height: 42px;
-  background: var(--accent);
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-  margin-right: 0.75rem;
-}
-.sidebar-logo .logo-text {
-  color: white;
-  font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1.2;
-}
-.sidebar-logo .logo-sub {
-  color: rgba(255,255,255,0.5);
-  font-size: 0.72rem;
-}
-.sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
-.nav-group-label {
-  color: rgba(255,255,255,0.35);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.75rem 1.5rem 0.25rem;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 1.5rem;
-  color: rgba(255,255,255,0.7);
-  cursor: pointer;
-  border-radius: 0;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-  border-left: 3px solid transparent;
-}
-.nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
-.nav-item.active {
-  background: rgba(249,115,22,0.15);
-  color: var(--accent);
-  border-left-color: var(--accent);
-}
-.nav-item .nav-icon { width: 20px; text-align: center; font-size: 0.9rem; }
-.sidebar-user {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
-.user-avatar {
-  width: 36px; height: 36px;
-  background: var(--accent);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 0.85rem;
-  margin-right: 0.6rem;
-}
-.user-info { color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; }
-.user-role { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
-
-/* Main content */
-.main-content {
-  margin-left: var(--sidebar-w);
-  flex: 1;
-  min-height: 100vh;
-}
-.topbar {
-  background: white;
-  border-bottom: 1px solid var(--border);
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-.page-content { padding: 1.5rem; }
-
-/* Cards */
-.card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.card-header-custom {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  font-weight: 600;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.card-body-custom { padding: 1.25rem; }
-
-/* Stats */
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.stat-icon {
-  width: 48px; height: 48px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  flex-shrink: 0;
-}
-.stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
-.stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
-
-/* Buttons */
-.btn-primary-custom {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-.btn-primary-custom:hover { background: var(--primary-light); transform: translateY(-1px); }
-.btn-accent { background: var(--accent); color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-.btn-accent:hover { background: #ea6c0a; }
-.btn-success { background: var(--success); color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-.btn-danger { background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
-.btn-outline { background: transparent; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-.btn-outline:hover { background: var(--bg); }
-.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.78rem; }
-
-/* Form elements */
-.form-label { font-weight: 500; font-size: 0.875rem; margin-bottom: 0.35rem; display: block; color: var(--text); }
-.form-control, .form-select {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.55rem 0.875rem;
-  font-size: 0.875rem;
-  width: 100%;
-  font-family: inherit;
-  transition: border-color 0.2s;
-  background: white;
-  color: var(--text);
-}
-.form-control:focus, .form-select:focus {
-  outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(37,99,168,0.1);
-}
-textarea.form-control { resize: vertical; min-height: 80px; }
-
-/* Badge */
-.badge-custom {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.badge-fire { background: #fee2e2; color: #dc2626; }
-.badge-water { background: #dbeafe; color: #1d4ed8; }
-.badge-accident { background: #fef3c7; color: #d97706; }
-.badge-search { background: #f3e8ff; color: #7c3aed; }
-.badge-other { background: #f1f5f9; color: #475569; }
-.badge-admin { background: #fef3c7; color: #92400e; }
-.badge-user { background: #dbeafe; color: #1e40af; }
-.badge-active { background: #dcfce7; color: #15803d; }
-.badge-busy { background: #fee2e2; color: #dc2626; }
-
-/* Table */
-.table-custom { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-.table-custom th { background: var(--bg); padding: 0.65rem 0.875rem; font-weight: 600; text-align: left; border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
-.table-custom td { padding: 0.75rem 0.875rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.table-custom tr:hover { background: var(--bg); }
-
-/* Report card */
-.report-card {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: all 0.2s;
-  background: white;
-}
-.report-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
-.report-card-header {
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-.report-card-body { padding: 1rem; }
-
-/* Image grid */
-.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
-.img-thumb {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 2px solid var(--border);
-  transition: all 0.2s;
-}
-.img-thumb:hover { border-color: var(--primary-light); transform: scale(1.03); }
-
-/* Checkbox list */
-.employee-check-list { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; }
-.employee-check-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; }
-.employee-check-item:hover { background: var(--bg); }
-.employee-check-item input { cursor: pointer; }
-
-/* GPS button */
-.gps-btn {
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.25rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.875rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-.gps-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-.gps-result {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 0.82rem;
-  margin-top: 0.5rem;
-  display: none;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 500;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  overflow-y: auto;
-}
-.modal-overlay.active { display: flex; }
-.modal-box {
-  background: white;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-}
-.modal-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky; top: 0; background: white; z-index: 1;
-}
-.modal-header h5 { font-weight: 700; margin: 0; font-size: 1rem; }
-.modal-body { padding: 1.5rem; }
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  position: sticky; bottom: 0; background: white;
-}
-.btn-close-custom {
-  background: none; border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0.2rem;
-  line-height: 1;
-}
-.btn-close-custom:hover { color: var(--text); }
-
-/* Toast */
-.toast-container {
-  position: fixed;
-  bottom: 1.5rem; right: 1.5rem;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.toast-item {
-  background: #1e293b;
-  color: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  animation: slideIn 0.3s ease;
-  min-width: 260px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-.toast-item.success { border-left: 4px solid var(--success); }
-.toast-item.error { border-left: 4px solid var(--danger); }
-.toast-item.info { border-left: 4px solid var(--accent2); }
-@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-/* Available resources info */
-.resource-tag { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.78rem; cursor: pointer; }
-.resource-tag:hover { background: #dbeafe; border-color: #93c5fd; }
-
-/* Lightbox */
-#lightbox {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.9);
-  z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-#lightbox.active { display: flex; }
-#lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
-
-/* Section pages */
-.section-page { display: none; }
-.section-page.active { display: block; }
-
-/* Responsive */
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: none; }
-  .main-content { margin-left: 0; }
-  .topbar { padding: 0.75rem 1rem; }
-  .page-content { padding: 1rem; }
-}
-
-/* Loading spinner */
-.spinner {
-  width: 20px; height: 20px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.divider { height: 1px; background: var(--border); margin: 1rem 0; }
-.text-muted { color: var(--text-muted); }
-.text-sm { font-size: 0.8rem; }
-.fw-600 { font-weight: 600; }
-.gap-2 { gap: 0.5rem; }
-.empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
-.empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3; }
-</style>
-</head>
-<body>
-
-<!-- AUTH PAGE -->
-<div id="auth-page">
-  <div class="auth-card">
-    <div class="auth-logo"><i class="fas fa-fire-extinguisher"></i></div>
-    <div class="auth-title">กองป้องกันและบรรเทาสาธารณภัย</div>
-    <div class="auth-subtitle">ระบบบันทึกการปฏิบัติงานประจำวัน</div>
-    <div>
-      <label class="form-label">รหัสพนักงาน</label>
-      <input id="login-empid" type="text" class="form-control" placeholder="กรอกรหัสพนักงาน" maxlength="20">
-    </div>
-    <div class="mt-3">
-      <label class="form-label">รหัสผ่าน</label>
-      <input id="login-pass" type="password" class="form-control" placeholder="รหัสผ่าน">
-    </div>
-    <button onclick="doLogin()" class="btn-primary-custom w-100 mt-4" style="padding:0.75rem;" id="login-btn">
-      <i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ
-    </button>
-    <div id="login-error" class="mt-3 text-center text-danger text-sm" style="display:none;"></div>
-    <div class="mt-3 text-center text-sm text-muted">
-      <span>ยังไม่มีบัญชี? ติดต่อแอดมินเพื่อลงทะเบียน</span>
-    </div>
-  </div>
-</div>
-
-<!-- MAIN APP -->
-<div id="app-page">
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo d-flex align-items-center">
-      <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
-      <div>
-        <div class="logo-text">กองป้องกันฯ</div>
-        <div class="logo-sub">ระบบบันทึกปฏิบัติงาน</div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-group-label">เมนูหลัก</div>
-      <div class="nav-item active" onclick="showSection('dashboard')">
-        <span class="nav-icon"><i class="fas fa-home"></i></span> ภาพรวม
-      </div>
-      <div class="nav-item" onclick="showSection('new-report')">
-        <span class="nav-icon"><i class="fas fa-plus-circle"></i></span> บันทึกการปฏิบัติงาน
-      </div>
-      <div class="nav-item" onclick="showSection('history')">
-        <span class="nav-icon"><i class="fas fa-history"></i></span> ประวัติการปฏิบัติงาน
-      </div>
-      <div class="nav-item" onclick="showSection('summary')">
-        <span class="nav-icon"><i class="fas fa-chart-bar"></i></span> สรุปภารกิจ
-      </div>
-      <div id="admin-nav-group" style="display:none;">
-        <div class="nav-group-label">แอดมิน</div>
-        <div class="nav-item" onclick="showSection('admin-employees')">
-          <span class="nav-icon"><i class="fas fa-users-cog"></i></span> จัดการพนักงาน
-        </div>
-        <div class="nav-item" onclick="showSection('admin-vehicles')">
-          <span class="nav-icon"><i class="fas fa-car"></i></span> จัดการรถ
-        </div>
-        <div class="nav-item" onclick="showSection('admin-pumps')">
-          <span class="nav-icon"><i class="fas fa-water"></i></span> จัดการเครื่องสูบน้ำ
-        </div>
-        <div class="nav-item" onclick="showSection('admin-all-reports')">
-          <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span> รายงานทั้งหมด
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-user">
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
-          <div class="user-avatar" id="sidebar-avatar">-</div>
-          <div>
-            <div class="user-info" id="sidebar-name">-</div>
-            <div class="user-role" id="sidebar-role">-</div>
-          </div>
-        </div>
-        <button onclick="doLogout()" title="ออกจากระบบ" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1rem;padding:0.3rem;">
-          <i class="fas fa-sign-out-alt"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="d-flex align-items-center gap-3">
-        <button class="btn-outline" id="sidebar-toggle" onclick="toggleSidebar()" style="display:none;">
-          <i class="fas fa-bars"></i>
-        </button>
-        <div id="page-title" class="fw-600" style="font-size:1rem;">ภาพรวม</div>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <span id="topbar-date" class="text-sm text-muted"></span>
-        <span id="topbar-role-badge" class="badge-custom badge-user">User</span>
-      </div>
-    </div>
-
-    <!-- Page Content -->
-    <div class="page-content">
-
-      <!-- ===== DASHBOARD ===== -->
-      <div class="section-page active" id="section-dashboard">
-        <div class="row g-3 mb-4" id="stat-cards">
-          <div class="col-6 col-md-3">
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fas fa-clipboard-check"></i></div>
-              <div>
-                <div class="stat-value" id="stat-today">0</div>
-                <div class="stat-label">งานวันนี้</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#fff7ed;color:#f97316;"><i class="fas fa-fire"></i></div>
-              <div>
-                <div class="stat-value" id="stat-fire">0</div>
-                <div class="stat-label">งานอัคคีภัย</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-car"></i></div>
-              <div>
-                <div class="stat-value" id="stat-avail-v">0</div>
-                <div class="stat-label">รถพร้อมใช้</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="stat-card">
-              <div class="stat-icon" style="background:#faf5ff;color:#7c3aed;"><i class="fas fa-tint"></i></div>
-              <div>
-                <div class="stat-value" id="stat-avail-p">0</div>
-                <div class="stat-label">เครื่องสูบน้ำพร้อมใช้</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card mb-4">
-          <div class="card-header-custom"><i class="fas fa-bell text-warning"></i> งานที่กำลังดำเนินการ</div>
-          <div class="card-body-custom" id="active-missions-list">
-            <div class="empty-state"><i class="fas fa-check-circle text-success"></i><div>ไม่มีภารกิจที่กำลังดำเนินการ</div></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header-custom"><i class="fas fa-clock text-primary"></i> งานล่าสุด</div>
-          <div class="card-body-custom" id="recent-reports-list">
-            <div class="empty-state"><i class="fas fa-folder-open"></i><div>ยังไม่มีรายงาน</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== NEW REPORT FORM ===== -->
-      <div class="section-page" id="section-new-report">
-        <div class="card">
-          <div class="card-header-custom" style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border-radius: 12px 12px 0 0;">
-            <i class="fas fa-file-alt"></i> ฟอร์มบันทึกการปฏิบัติงาน
-          </div>
-          <div class="card-body-custom">
-            <form id="report-form" onsubmit="return false;">
-
-              <!-- Section 1: เวลา -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-calendar-alt me-2"></i>การบันทึกเวลาปฏิบัติงาน
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">วันที่ปฏิบัติงาน <span class="text-danger">*</span></label>
-                    <input type="date" id="f-date" class="form-control" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">เวลาเริ่มต้น <span class="text-danger">*</span></label>
-                    <input type="time" id="f-time" class="form-control" required>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 2: รถ -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-car me-2"></i>ข้อมูลรถปฏิบัติภารกิจ
-                </div>
-                <div class="row g-3 align-items-end">
-                  <div class="col-md-8">
-                    <label class="form-label">เลือกรถ</label>
-                    <select id="f-vehicle" class="form-select">
-                      <option value="">-- ไม่ใช้รถ --</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <button type="button" class="resource-tag" onclick="showAvailableVehicles()" style="width:100%;justify-content:center;padding:0.55rem;">
-                      <i class="fas fa-eye"></i> ดูรถพร้อมใช้งาน
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 3: เครื่องสูบน้ำ -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-tint me-2"></i>ข้อมูลเครื่องสูบน้ำ
-                </div>
-                <div class="row g-3 align-items-end">
-                  <div class="col-md-8">
-                    <label class="form-label">เลือกเครื่องสูบน้ำ</label>
-                    <select id="f-pump" class="form-select">
-                      <option value="">-- ไม่ใช้เครื่องสูบน้ำ --</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <button type="button" class="resource-tag" onclick="showAvailablePumps()" style="width:100%;justify-content:center;padding:0.55rem;">
-                      <i class="fas fa-eye"></i> ดูเครื่องสูบน้ำพร้อมใช้
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 4: ทีม -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-users me-2"></i>รายชื่อทีมปฏิบัติภารกิจ
-                </div>
-                <label class="form-label">เลือกเพื่อนร่วมงาน (สามารถเลือกได้หลายคน)</label>
-                <div class="employee-check-list" id="team-checklist">
-                  <div class="text-muted text-sm p-2">กำลังโหลด...</div>
-                </div>
-              </div>
-
-              <!-- Section 5: ประเภทภารกิจ -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-tasks me-2"></i>ประเภทภารกิจ
-                </div>
-                <select id="f-mission-type" class="form-select" required>
-                  <option value="">-- เลือกประเภทภารกิจ --</option>
-                  <option value="fire">🔥 งานอัคคีภัย</option>
-                  <option value="water">🌊 งานกู้ภัยทางน้ำ</option>
-                  <option value="accident">🚑 งานอุบัติเหตุ</option>
-                  <option value="search">🔍 งานค้นหาผู้สูญหาย</option>
-                  <option value="other">📋 งานอื่นๆ</option>
-                </select>
-              </div>
-
-              <!-- Section 6: รายละเอียด -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-clipboard me-2"></i>รายละเอียดการปฏิบัติงาน
-                </div>
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label class="form-label">รายละเอียดงาน <span class="text-danger">*</span></label>
-                    <textarea id="f-detail" class="form-control" rows="3" placeholder="อธิบายรายละเอียดงานที่ปฏิบัติ..." required></textarea>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">สถานที่ปฏิบัติงาน <span class="text-danger">*</span></label>
-                    <input type="text" id="f-location" class="form-control" placeholder="ระบุสถานที่..." required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">ปัญหาที่พบ (ถ้ามี)</label>
-                    <input type="text" id="f-problem" class="form-control" placeholder="ปัญหาที่พบระหว่างปฏิบัติงาน...">
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">การแก้ไข / ข้อเสนอแนะ</label>
-                    <textarea id="f-suggestion" class="form-control" rows="2" placeholder="วิธีแก้ไขปัญหา หรือข้อเสนอแนะ..."></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 7: GPS -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-map-marker-alt me-2"></i>โลเคชั่น GPS
-                </div>
-                <button type="button" class="gps-btn" onclick="getGPS()">
-                  <i class="fas fa-crosshairs"></i> เช็คอิน / รับพิกัด GPS
-                </button>
-                <div id="gps-result" class="gps-result">
-                  <i class="fas fa-check-circle text-success me-2"></i>
-                  <strong>พิกัด:</strong>
-                  <span id="gps-display"></span>
-                  <a id="gps-link" href="#" target="_blank" class="ms-2 text-sm">
-                    <i class="fas fa-external-link-alt"></i> เปิด Google Maps
-                  </a>
-                </div>
-                <input type="hidden" id="f-lat">
-                <input type="hidden" id="f-lng">
-              </div>
-
-              <!-- Section 8: รูปภาพ -->
-              <div class="mb-4">
-                <div class="fw-600 mb-3" style="color:var(--primary);border-left:3px solid var(--accent);padding-left:0.75rem;">
-                  <i class="fas fa-camera me-2"></i>แนบรูปภาพ
-                </div>
-                <input type="file" id="f-images" accept="image/*" multiple class="form-control">
-                <div class="text-muted text-sm mt-1">รองรับ JPG, PNG, GIF — สามารถเลือกได้หลายไฟล์</div>
-                <div id="img-preview" class="img-grid mt-2"></div>
-              </div>
-
-              <div class="divider"></div>
-              <div class="d-flex gap-3 flex-wrap">
-                <button type="button" onclick="submitReport()" class="btn-accent" id="submit-btn">
-                  <i class="fas fa-paper-plane me-2"></i>บันทึกรายงาน
-                </button>
-                <button type="button" onclick="resetForm()" class="btn-outline">
-                  <i class="fas fa-redo me-2"></i>รีเซ็ต
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== HISTORY ===== -->
-      <div class="section-page" id="section-history">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <div class="fw-600">ประวัติการปฏิบัติงาน</div>
-          <div class="d-flex gap-2 flex-wrap align-items-center">
-            <select id="hist-filter-type" class="form-select" style="width:auto;font-size:0.85rem;" onchange="loadHistory()">
-              <option value="">ทุกประเภท</option>
-              <option value="fire">อัคคีภัย</option>
-              <option value="water">กู้ภัยทางน้ำ</option>
-              <option value="accident">อุบัติเหตุ</option>
-              <option value="search">ค้นหาผู้สูญหาย</option>
-              <option value="other">งานอื่นๆ</option>
-            </select>
-            <button class="btn-outline btn-sm" onclick="exportCSV()"><i class="fas fa-file-csv me-1"></i>CSV</button>
-            <button class="btn-outline btn-sm" onclick="exportJSON()"><i class="fas fa-file-code me-1"></i>JSON</button>
-          </div>
-        </div>
-        <div id="history-list" class="row g-3">
-          <div class="col-12"><div class="empty-state"><i class="fas fa-folder-open"></i><div>ยังไม่มีรายงาน</div></div></div>
-        </div>
-      </div>
-
-      <!-- ===== SUMMARY ===== -->
-      <div class="section-page" id="section-summary">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <div class="fw-600">สรุปภารกิจ</div>
-          <div class="d-flex gap-2">
-            <select id="sum-period" class="form-select" style="width:auto;font-size:0.85rem;" onchange="loadSummary()">
-              <option value="day">รายวัน</option>
-              <option value="week">รายสัปดาห์</option>
-              <option value="month" selected>รายเดือน</option>
-              <option value="year">รายปี</option>
-            </select>
-          </div>
-        </div>
-        <div class="card mb-3">
-          <div class="card-header-custom"><i class="fas fa-chart-pie me-2"></i>ประเภทงาน</div>
-          <div class="card-body-custom"><canvas id="chart-type" height="120"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-header-custom"><i class="fas fa-chart-line me-2"></i>แนวโน้ม</div>
-          <div class="card-body-custom"><canvas id="chart-trend" height="120"></canvas></div>
-        </div>
-      </div>
-
-      <!-- ===== ADMIN: Employees ===== -->
-      <div class="section-page" id="section-admin-employees">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="fw-600">จัดการพนักงาน</div>
-          <button class="btn-primary-custom" onclick="openAddEmployeeModal()">
-            <i class="fas fa-plus me-2"></i>เพิ่มพนักงาน
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-body-custom p-0">
-            <div style="overflow-x:auto;">
-              <table class="table-custom">
-                <thead>
-                  <tr>
-                    <th>รหัสพนักงาน</th>
-                    <th>ชื่อ-สกุล</th>
-                    <th>ตำแหน่ง</th>
-                    <th>ระดับสิทธิ์</th>
-                    <th>จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody id="employees-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== ADMIN: Vehicles ===== -->
-      <div class="section-page" id="section-admin-vehicles">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="fw-600">จัดการรถยนต์</div>
-          <button class="btn-primary-custom" onclick="openAddVehicleModal()">
-            <i class="fas fa-plus me-2"></i>เพิ่มรถ
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-body-custom p-0">
-            <div style="overflow-x:auto;">
-              <table class="table-custom">
-                <thead>
-                  <tr>
-                    <th>ทะเบียน</th>
-                    <th>ยี่ห้อ</th>
-                    <th>รุ่น</th>
-                    <th>สถานะ</th>
-                    <th>จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody id="vehicles-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== ADMIN: Pumps ===== -->
-      <div class="section-page" id="section-admin-pumps">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="fw-600">จัดการเครื่องสูบน้ำ</div>
-          <button class="btn-primary-custom" onclick="openAddPumpModal()">
-            <i class="fas fa-plus me-2"></i>เพิ่มเครื่องสูบน้ำ
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-body-custom p-0">
-            <div style="overflow-x:auto;">
-              <table class="table-custom">
-                <thead>
-                  <tr>
-                    <th>เลขครุภัณฑ์</th>
-                    <th>ยี่ห้อ</th>
-                    <th>รุ่น</th>
-                    <th>สถานะ</th>
-                    <th>ผู้ใช้/สถานที่</th>
-                    <th>จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody id="pumps-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== ADMIN: All Reports ===== -->
-      <div class="section-page" id="section-admin-all-reports">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <div class="fw-600">รายงานทั้งหมด</div>
-          <div class="d-flex gap-2 flex-wrap">
-            <input type="date" id="admin-filter-date" class="form-control" style="width:auto;font-size:0.85rem;" onchange="loadAdminReports()">
-            <select id="admin-filter-type" class="form-select" style="width:auto;font-size:0.85rem;" onchange="loadAdminReports()">
-              <option value="">ทุกประเภท</option>
-              <option value="fire">อัคคีภัย</option>
-              <option value="water">กู้ภัยทางน้ำ</option>
-              <option value="accident">อุบัติเหตุ</option>
-              <option value="search">ค้นหาผู้สูญหาย</option>
-              <option value="other">งานอื่นๆ</option>
-            </select>
-            <button class="btn-outline btn-sm" onclick="exportAdminCSV()"><i class="fas fa-file-csv me-1"></i>CSV</button>
-            <button class="btn-outline btn-sm" onclick="exportAdminJSON()"><i class="fas fa-file-code me-1"></i>JSON</button>
-          </div>
-        </div>
-        <div id="admin-reports-list" class="row g-3"></div>
-      </div>
-
-    </div><!-- /page-content -->
-  </div><!-- /main-content -->
-</div><!-- /app-page -->
-
-<!-- ===== MODALS ===== -->
-
-<!-- Report Detail Modal -->
-<div class="modal-overlay" id="modal-report-detail">
-  <div class="modal-box" style="max-width:750px;">
-    <div class="modal-header">
-      <h5><i class="fas fa-file-alt me-2"></i>รายละเอียดรายงาน</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-report-detail')">×</button>
-    </div>
-    <div class="modal-body" id="modal-report-content"></div>
-    <div class="modal-footer" id="modal-report-footer"></div>
-  </div>
-</div>
-
-<!-- Available Vehicles Modal -->
-<div class="modal-overlay" id="modal-vehicles">
-  <div class="modal-box" style="max-width:550px;">
-    <div class="modal-header">
-      <h5><i class="fas fa-car me-2"></i>สถานะรถทั้งหมด</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-vehicles')">×</button>
-    </div>
-    <div class="modal-body" id="modal-vehicles-content"></div>
-  </div>
-</div>
-
-<!-- Available Pumps Modal -->
-<div class="modal-overlay" id="modal-pumps">
-  <div class="modal-box" style="max-width:550px;">
-    <div class="modal-header">
-      <h5><i class="fas fa-tint me-2"></i>สถานะเครื่องสูบน้ำทั้งหมด</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-pumps')">×</button>
-    </div>
-    <div class="modal-body" id="modal-pumps-content"></div>
-  </div>
-</div>
-
-<!-- Add Employee Modal -->
-<div class="modal-overlay" id="modal-add-employee">
-  <div class="modal-box" style="max-width:480px;">
-    <div class="modal-header">
-      <h5 id="emp-modal-title"><i class="fas fa-user-plus me-2"></i>เพิ่มพนักงาน</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-add-employee')">×</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="emp-edit-id">
-      <div class="mb-3">
-        <label class="form-label">รหัสพนักงาน <span class="text-danger">*</span></label>
-        <input type="text" id="emp-empid" class="form-control" placeholder="เช่น EMP001" maxlength="20">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">ชื่อ-สกุล <span class="text-danger">*</span></label>
-        <input type="text" id="emp-name" class="form-control" placeholder="ชื่อ นามสกุล">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">ตำแหน่ง</label>
-        <input type="text" id="emp-position" class="form-control" placeholder="ตำแหน่งงาน">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">รหัสผ่าน <span class="text-danger" id="pass-required">*</span></label>
-        <input type="password" id="emp-pass" class="form-control" placeholder="รหัสผ่านสำหรับเข้าสู่ระบบ" minlength="6">
-        <div class="text-muted text-sm mt-1" id="pass-hint">อย่างน้อย 6 ตัวอักษร</div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">ระดับสิทธิ์</label>
-        <select id="emp-role" class="form-select">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal('modal-add-employee')">ยกเลิก</button>
-      <button class="btn-primary-custom" onclick="saveEmployee()">
-        <i class="fas fa-save me-2"></i>บันทึก
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Add Vehicle Modal -->
-<div class="modal-overlay" id="modal-add-vehicle">
-  <div class="modal-box" style="max-width:480px;">
-    <div class="modal-header">
-      <h5 id="veh-modal-title"><i class="fas fa-car me-2"></i>เพิ่มรถ</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-add-vehicle')">×</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="veh-edit-id">
-      <div class="mb-3">
-        <label class="form-label">ทะเบียนรถ <span class="text-danger">*</span></label>
-        <input type="text" id="veh-plate" class="form-control" placeholder="เช่น กข 1234 กทม">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">ยี่ห้อ</label>
-        <input type="text" id="veh-brand" class="form-control" placeholder="เช่น ISUZU">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">รุ่น</label>
-        <input type="text" id="veh-model" class="form-control" placeholder="เช่น D-MAX">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal('modal-add-vehicle')">ยกเลิก</button>
-      <button class="btn-primary-custom" onclick="saveVehicle()"><i class="fas fa-save me-2"></i>บันทึก</button>
-    </div>
-  </div>
-</div>
-
-<!-- Add Pump Modal -->
-<div class="modal-overlay" id="modal-add-pump">
-  <div class="modal-box" style="max-width:480px;">
-    <div class="modal-header">
-      <h5 id="pump-modal-title"><i class="fas fa-tint me-2"></i>เพิ่มเครื่องสูบน้ำ</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-add-pump')">×</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="pump-edit-id">
-      <div class="mb-3">
-        <label class="form-label">เลขทะเบียนครุภัณฑ์ <span class="text-danger">*</span></label>
-        <input type="text" id="pump-serial" class="form-control" placeholder="เช่น WP-2024-001">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">ยี่ห้อ</label>
-        <input type="text" id="pump-brand" class="form-control" placeholder="ยี่ห้อ">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">รุ่น</label>
-        <input type="text" id="pump-model" class="form-control" placeholder="รุ่น">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal('modal-add-pump')">ยกเลิก</button>
-      <button class="btn-primary-custom" onclick="savePump()"><i class="fas fa-save me-2"></i>บันทึก</button>
-    </div>
-  </div>
-</div>
-
-<!-- End Mission Modal -->
-<div class="modal-overlay" id="modal-end-mission">
-  <div class="modal-box" style="max-width:460px;">
-    <div class="modal-header">
-      <h5><i class="fas fa-flag-checkered me-2 text-success"></i>จบภารกิจ</h5>
-      <button class="btn-close-custom" onclick="closeModal('modal-end-mission')">×</button>
-    </div>
-    <div class="modal-body" id="end-mission-content"></div>
-    <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal('modal-end-mission')">ยกเลิก</button>
-      <button class="btn-success" onclick="confirmEndMission()"><i class="fas fa-check me-2"></i>ยืนยันจบภารกิจ</button>
-    </div>
-  </div>
-</div>
-
-<!-- Lightbox -->
-<div id="lightbox" onclick="closeLightbox()">
-  <img id="lightbox-img" src="" alt="">
-</div>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toast-container"></div>
-
-<script>
-// ============================================================
-// UTILITY FUNCTIONS
-// ============================================================
-function showToast(msg, type = 'success') {
-  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
-  const el = document.createElement('div');
-  el.className = `toast-item ${type}`;
-  el.innerHTML = `<i class="fas ${icons[type]}"></i>${msg}`;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-function openModal(id) {
-  document.getElementById(id).classList.add('active');
-}
-
-function openLightbox(src) {
-  document.getElementById('lightbox-img').src = src;
-  document.getElementById('lightbox').classList.add('active');
-}
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('active');
-}
-
-function getMissionBadge(type) {
-  const map = {
-    fire: '<span class="badge-custom badge-fire"><i class="fas fa-fire"></i>อัคคีภัย</span>',
-    water: '<span class="badge-custom badge-water"><i class="fas fa-water"></i>กู้ภัยทางน้ำ</span>',
-    accident: '<span class="badge-custom badge-accident"><i class="fas fa-car-crash"></i>อุบัติเหตุ</span>',
-    search: '<span class="badge-custom" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-search"></i>ค้นหาผู้สูญหาย</span>',
-    other: '<span class="badge-custom badge-other"><i class="fas fa-ellipsis-h"></i>อื่นๆ</span>'
-  };
-  return map[type] || `<span class="badge-custom badge-other">${type}</span>`;
-}
-
-function formatDateTime(ts) {
-  if (!ts) return '-';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-function formatDateOnly(ts) {
-  if (!ts) return '-';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' });
+function getTypeBadge(type) {
+  const map = { fire:'badge-fire', water:'badge-water', accident:'badge-accident', search:'badge-search', other:'badge-other' };
+  const label = { fire:'🔥 อัคคีภัย', water:'🌊 กู้ภัยทางน้ำ', accident:'🚗 อุบัติเหตุ', search:'🔍 ค้นหาผู้สูญหาย', other:'📋 อื่นๆ' };
+  return `<span class="badge-type ${map[type]||'badge-other'}">${label[type]||type}</span>`;
 }
 
 function calcDuration(start, end) {
-  if (!start || !end) return '-';
-  const s = start.toDate ? start.toDate() : new Date(start);
-  const e = end.toDate ? end.toDate() : new Date(end);
-  const diff = Math.max(0, e - s);
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  return `${h} ชั่วโมง ${m} นาที`;
+  if (!start || !end) return null;
+  const s = new Date(`1970-01-01T${start}`);
+  const e = new Date(`1970-01-01T${end}`);
+  const diff = (e - s) / 60000;
+  if (diff < 0) return null;
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  return h > 0 ? `${h} ชม. ${m} นาที` : `${m} นาที`;
 }
 
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+// ========== BOOT: ensure default admin exists on page load ==========
+async function bootEnsureAdmin() {
+  try {
+    const snap = await get(ref(db, 'users/ADMIN001'));
+    if (!snap.exists()) {
+      await set(ref(db, 'users/ADMIN001'), {
+        empId: 'ADMIN001',
+        name: 'หัวหน้ากองป้องกันฯ',
+        position: 'หัวหน้ากองป้องกันและบรรเทาสาธารณภัย',
+        role: 'admin',
+        password: 'admin1234'
+      });
+    }
+  } catch(e) { console.warn('boot admin check failed:', e); }
 }
+bootEnsureAdmin();
 
-function showSection(name) {
-  document.querySelectorAll('.section-page').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('section-' + name).classList.add('active');
-  document.querySelector(`.nav-item[onclick="showSection('${name}')"]`)?.classList.add('active');
-  const titles = {
-    dashboard: 'ภาพรวม', 'new-report': 'บันทึกการปฏิบัติงาน',
-    history: 'ประวัติการปฏิบัติงาน', summary: 'สรุปภารกิจ',
-    'admin-employees': 'จัดการพนักงาน', 'admin-vehicles': 'จัดการรถ',
-    'admin-pumps': 'จัดการเครื่องสูบน้ำ', 'admin-all-reports': 'รายงานทั้งหมด'
-  };
-  document.getElementById('page-title').textContent = titles[name] || name;
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'history') loadHistory();
-  if (name === 'summary') loadSummary();
-  if (name === 'admin-employees') loadEmployees();
-  if (name === 'admin-vehicles') loadVehiclesAdmin();
-  if (name === 'admin-pumps') loadPumpsAdmin();
-  if (name === 'admin-all-reports') loadAdminReports();
-  if (window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
-}
-
-// ============================================================
-// AUTH
-// ============================================================
-window.showLoginPage = function() {
-  document.getElementById('auth-page').style.display = 'flex';
-  document.getElementById('app-page').classList.remove('active');
+// ========== AUTH ==========
+window.togglePwd = function(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
 };
 
 window.doLogin = async function() {
-  const empid = document.getElementById('login-empid').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  const errEl = document.getElementById('login-error');
-  const btn = document.getElementById('login-btn');
-  if (!empid || !pass) { errEl.style.display = 'block'; errEl.textContent = 'กรุณากรอกรหัสพนักงานและรหัสผ่าน'; return; }
-  btn.innerHTML = '<span class="spinner"></span> กำลังเข้าสู่ระบบ...';
-  btn.disabled = true;
-  errEl.style.display = 'none';
+  const empId = document.getElementById('loginEmpId').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!empId || !password) { toast('กรุณากรอกรหัสพนักงานและรหัสผ่าน','error'); return; }
+  const loginBtn = document.querySelector('#loginForm .btn-primary-custom');
+  loginBtn.disabled = true;
+  loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
   try {
-    const email = empid.toLowerCase() + '@ops.local';
-    await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
-  } catch (e) {
-    errEl.style.display = 'block';
-    errEl.textContent = 'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง';
-    btn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ';
-    btn.disabled = false;
+    const snap = await get(ref(db, 'users/' + empId));
+    if (!snap.exists()) { toast('ไม่พบรหัสพนักงานนี้ในระบบ','error'); return; }
+    const user = snap.val();
+    if (user.password !== password) { toast('รหัสผ่านไม่ถูกต้อง','error'); return; }
+    currentUser = { ...user, empId };
+    initApp();
+  } catch(e) { toast('เกิดข้อผิดพลาด: ' + e.message,'error'); }
+  finally {
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ';
   }
 };
 
-window.doLogout = async function() {
-  await window._fb.signOut(window._fb.auth);
+window.doLogout = function() {
+  currentUser = null;
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginEmpId').value='';
+  document.getElementById('loginPassword').value='';
 };
 
-// ============================================================
-// INIT APP
-// ============================================================
-window.initApp = async function() {
-  const u = window.appState.currentUserData;
-  document.getElementById('auth-page').style.display = 'none';
-  document.getElementById('app-page').classList.add('active');
-  document.getElementById('sidebar-name').textContent = u.name || u.empid;
-  document.getElementById('sidebar-role').textContent = u.position || (u.role === 'admin' ? 'แอดมิน' : 'พนักงาน');
-  document.getElementById('sidebar-avatar').textContent = (u.name || u.empid || '?')[0].toUpperCase();
-  document.getElementById('topbar-role-badge').textContent = u.role === 'admin' ? 'Admin' : 'User';
-  document.getElementById('topbar-role-badge').className = `badge-custom ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}`;
-  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('th-TH', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
-  if (u.role === 'admin') document.getElementById('admin-nav-group').style.display = 'block';
-  if (window.innerWidth < 768) document.getElementById('sidebar-toggle').style.display = 'block';
+// ========== APP INIT ==========
+async function initApp() {
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
 
-  // Set default date/time
-  const now = new Date();
-  document.getElementById('f-date').value = now.toISOString().split('T')[0];
-  document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+  document.getElementById('userNameSidebar').textContent = currentUser.name || currentUser.empId;
+  document.getElementById('userRoleSidebar').textContent = currentUser.role === 'admin' ? '👑 ผู้ดูแลระบบ' : '👤 พนักงาน';
+  document.getElementById('userAvatarSidebar').textContent = (currentUser.name||currentUser.empId)[0].toUpperCase();
 
-  await Promise.all([loadAllData()]);
-  loadDashboard();
-  buildTeamChecklist();
-  populateVehicleDropdown();
-  populatePumpDropdown();
+  // Admin sections
+  const adminEls = document.querySelectorAll('.admin-only');
+  adminEls.forEach(el => el.style.display = currentUser.role === 'admin' ? '' : 'none');
 
-  document.getElementById('f-images').addEventListener('change', previewImages);
 
-  // Realtime updates
-  const { db, collection, query, orderBy, onSnapshot } = window._fb;
-  window._fb.onSnapshot(
-    window._fb.query(window._fb.collection(db, 'reports'), window._fb.orderBy('createdAt', 'desc')),
-    (snap) => {
-      window.appState.reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      updateDashboardStats();
-    }
-  );
-};
+  // Load data listeners
+  setupDataListeners();
 
-async function loadAllData() {
-  const { db, collection, getDocs } = window._fb;
-  const [empSnap, vehSnap, pumpSnap] = await Promise.all([
-    getDocs(collection(db, 'users')),
-    getDocs(collection(db, 'vehicles')),
-    getDocs(collection(db, 'pumps'))
-  ]);
-  window.appState.employees = empSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  window.appState.vehicles = vehSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  window.appState.pumps = pumpSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Set today's date in form
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toTimeString().slice(0,5);
+  document.getElementById('fDate').value = today;
+  document.getElementById('fTimeStart').value = now;
+  document.getElementById('endMissionTime').value = now;
+
+  showPage('dashboard');
 }
 
-// ============================================================
-// DASHBOARD
-// ============================================================
-function loadDashboard() {
+
+function setupDataListeners() {
+  onValue(ref(db, 'reports'), snap => {
+    allReports = snap.val() || {};
+    updateDashboard();
+    loadHistory();
+    loadVehicleStatus();
+    loadPumpStatus();
+  });
+  onValue(ref(db, 'users'), snap => {
+    allUsers = snap.val() || {};
+    renderTeamCheckboxes();
+    renderUsersTable();
+    populateVehicleSelect();
+    populatePumpSelect();
+  });
+  onValue(ref(db, 'vehicles'), snap => {
+    allVehicles = snap.val() || {};
+    populateVehicleSelect();
+    renderVehiclesTable();
+    loadVehicleStatus();
+    updateDashboardStats();
+  });
+  onValue(ref(db, 'pumps'), snap => {
+    allPumps = snap.val() || {};
+    populatePumpSelect();
+    renderPumpsTable();
+    loadPumpStatus();
+    updateDashboardStats();
+  });
+}
+
+// ========== NAVIGATION ==========
+window.showPage = function(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pageMap = {
+    dashboard:'pageDashboard', newReport:'pageNewReport', history:'pageHistory',
+    summary:'pageSummary', vehicles:'pageVehicles', pumps:'pagePumps',
+    adminUsers:'pageAdminUsers', adminVehicles:'pageAdminVehicles'
+  };
+  const titleMap = {
+    dashboard:'แดชบอร์ด', newReport:'บันทึกการปฏิบัติงาน', history:'ประวัติการปฏิบัติงาน',
+    summary:'สรุปภารกิจ', vehicles:'รถปฏิบัติภารกิจ', pumps:'เครื่องสูบน้ำ',
+    adminUsers:'จัดการพนักงาน', adminVehicles:'จัดการรถ/เครื่องสูบน้ำ'
+  };
+  document.getElementById(pageMap[name]).classList.add('active');
+  document.getElementById('pageTitle').textContent = titleMap[name];
+  // mark nav active
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if (n.getAttribute('onclick')===`showPage('${name}')`) n.classList.add('active');
+  });
+  if (name==='summary') setTimeout(renderSummaryCharts,100);
+  if (name==='vehicles') loadVehicleStatus();
+  if (name==='pumps') loadPumpStatus();
+  // close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+};
+
+window.toggleSidebar = function() {
+  document.getElementById('sidebar').classList.toggle('open');
+};
+
+// ========== DASHBOARD ==========
+function updateDashboard() {
   updateDashboardStats();
-  renderActiveMissions();
-  renderRecentReports();
+  renderDashRecent();
+  renderDashPieChart();
 }
 
 function updateDashboardStats() {
-  const reports = window.appState.reports;
-  const today = new Date().toDateString();
-  const todayReports = reports.filter(r => {
-    const d = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt || 0);
-    return d.toDateString() === today;
-  });
-  document.getElementById('stat-today').textContent = todayReports.length;
-  document.getElementById('stat-fire').textContent = reports.filter(r => r.missionType === 'fire').length;
-  const busyVehicles = new Set(reports.filter(r => r.status === 'active' && r.vehicleId).map(r => r.vehicleId));
-  const busyPumps = new Set(reports.filter(r => r.status === 'active' && r.pumpId).map(r => r.pumpId));
-  document.getElementById('stat-avail-v').textContent = window.appState.vehicles.length - busyVehicles.size;
-  document.getElementById('stat-avail-p').textContent = window.appState.pumps.length - busyPumps.size;
+  const reports = Object.values(allReports);
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('statTotal').textContent = reports.length;
+  document.getElementById('statToday').textContent = reports.filter(r=>r.date===today).length;
+  // vehicle/pump stats from allVehicles/allPumps
+  const vAvail = Object.values(allVehicles).filter(v=>!v.inUse).length;
+  const pAvail = Object.values(allPumps).filter(p=>!p.inUse).length;
+  document.getElementById('statVehicleAvail').textContent = vAvail;
+  document.getElementById('statPumpAvail').textContent = pAvail;
 }
 
-function renderActiveMissions() {
-  const active = window.appState.reports.filter(r => r.status === 'active');
-  const el = document.getElementById('active-missions-list');
-  if (!active.length) {
-    el.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle text-success"></i><div>ไม่มีภารกิจที่กำลังดำเนินการ</div></div>';
-    return;
-  }
-  el.innerHTML = active.map(r => `
-    <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded" style="background:var(--bg);">
-      <div>
-        ${getMissionBadge(r.missionType)}
-        <span class="ms-2 fw-600 text-sm">${r.location || '-'}</span>
-        <span class="ms-2 text-muted text-sm">โดย ${r.reporterName || '-'}</span>
+function renderDashRecent() {
+  const list = document.getElementById('dashRecentList');
+  const sorted = Object.entries(allReports).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0)).slice(0,10);
+  if (!sorted.length) { list.innerHTML='<div class="text-center p-4 text-muted">ยังไม่มีข้อมูล</div>'; return; }
+  list.innerHTML = sorted.map(([id,r])=>`
+    <div class="history-card ${r.missionType||''}" onclick="showReportDetail('${id}')">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+          <div class="fw-600">${r.location||'-'}</div>
+          <div class="text-muted small">${r.date} ${r.timeStart||''} • ${r.reporterName||r.reporterId||'-'}</div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          ${getTypeBadge(r.missionType)}
+          <span class="badge-type ${r.completed?'badge-complete':'badge-inprogress'}">${r.completed?'✅ เสร็จสิ้น':'⏳ กำลังดำเนินการ'}</span>
+        </div>
       </div>
-      <span class="text-muted text-sm">${formatDateOnly(r.createdAt)}</span>
     </div>
   `).join('');
 }
 
-function renderRecentReports() {
-  const recent = window.appState.reports.slice(0, 5);
-  const el = document.getElementById('recent-reports-list');
-  if (!recent.length) {
-    el.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><div>ยังไม่มีรายงาน</div></div>';
-    return;
-  }
-  el.innerHTML = `<table class="table-custom">
-    <thead><tr><th>วันที่</th><th>ประเภท</th><th>สถานที่</th><th>ผู้รายงาน</th><th>สถานะ</th></tr></thead>
-    <tbody>
-    ${recent.map(r => `
-      <tr style="cursor:pointer;" onclick="viewReport('${r.id}')">
-        <td>${formatDateOnly(r.createdAt)}</td>
-        <td>${getMissionBadge(r.missionType)}</td>
-        <td>${r.location || '-'}</td>
-        <td>${r.reporterName || '-'}</td>
-        <td><span class="badge-custom ${r.status === 'active' ? 'badge-active' : 'badge-other'}">${r.status === 'active' ? 'กำลังดำเนิน' : 'เสร็จสิ้น'}</span></td>
-      </tr>
-    `).join('')}
-    </tbody>
-  </table>`;
-}
-
-// ============================================================
-// GPS
-// ============================================================
-function getGPS() {
-  if (!navigator.geolocation) { showToast('เบราว์เซอร์ไม่รองรับ GPS', 'error'); return; }
-  showToast('กำลังรับพิกัด GPS...', 'info');
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lng = pos.coords.longitude.toFixed(6);
-      document.getElementById('f-lat').value = lat;
-      document.getElementById('f-lng').value = lng;
-      document.getElementById('gps-display').textContent = `${lat}, ${lng}`;
-      document.getElementById('gps-link').href = `https://www.google.com/maps?q=${lat},${lng}`;
-      document.getElementById('gps-result').style.display = 'flex';
-      showToast('รับพิกัด GPS สำเร็จ', 'success');
-    },
-    err => showToast('ไม่สามารถรับพิกัด GPS ได้', 'error')
-  );
-}
-
-// ============================================================
-// IMAGE PREVIEW
-// ============================================================
-function previewImages() {
-  const files = document.getElementById('f-images').files;
-  const preview = document.getElementById('img-preview');
-  preview.innerHTML = '';
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      img.className = 'img-thumb';
-      img.onclick = () => openLightbox(e.target.result);
-      preview.appendChild(img);
-    };
-    reader.readAsDataURL(file);
+function renderDashPieChart() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayReports = Object.values(allReports).filter(r=>r.date===today);
+  const counts = { fire:0, water:0, accident:0, search:0, other:0 };
+  todayReports.forEach(r=>{ if(counts[r.missionType]!==undefined) counts[r.missionType]++; else counts.other++; });
+  const data = Object.values(counts);
+  const ctx = document.getElementById('dashPieChart').getContext('2d');
+  if (dashPieChartInst) dashPieChartInst.destroy();
+  dashPieChartInst = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels:['อัคคีภัย','กู้ภัยทางน้ำ','อุบัติเหตุ','ค้นหาผู้สูญหาย','อื่นๆ'], datasets:[{ data, backgroundColor:['#e63946','#219ebc','#f4a261','#2a9d8f','#adb5bd'], borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Sarabun' }, boxWidth:14 } } } }
   });
 }
 
-// ============================================================
-// TEAM CHECKLIST
-// ============================================================
-function buildTeamChecklist() {
-  const ul = document.getElementById('team-checklist');
-  const me = window.appState.currentUserData;
-  const others = window.appState.employees.filter(e => e.id !== me.id);
-  if (!others.length) { ul.innerHTML = '<div class="text-muted text-sm p-2">ยังไม่มีพนักงานอื่น</div>'; return; }
-  ul.innerHTML = others.map(e => `
-    <label class="employee-check-item">
-      <input type="checkbox" value="${e.id}" data-name="${e.name}" class="team-member-cb">
-      <span><strong>${e.name}</strong> <span class="text-muted text-sm">(${e.position || '-'})</span></span>
+// ========== FORM ==========
+function populateVehicleSelect() {
+  const sel = document.getElementById('fVehicle');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- ไม่ใช้รถ --</option>';
+  Object.entries(allVehicles).forEach(([id,v])=>{
+    if (!v.inUse) {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `${v.plate} - ${v.brand} ${v.model}`;
+      sel.appendChild(opt);
+    }
+  });
+}
+
+function populatePumpSelect() {
+  const sel = document.getElementById('fPump');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- ไม่ใช้เครื่องสูบน้ำ --</option>';
+  Object.entries(allPumps).forEach(([id,p])=>{
+    if (!p.inUse) {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `${p.assetNo} - ${p.brand} ${p.model}`;
+      sel.appendChild(opt);
+    }
+  });
+}
+
+function renderTeamCheckboxes() {
+  const grid = document.getElementById('teamCheckboxGrid');
+  if (!grid) return;
+  const users = Object.entries(allUsers).filter(([id])=>id!==currentUser.empId);
+  if (!users.length) { grid.innerHTML='<div class="text-muted small">ยังไม่มีข้อมูลพนักงาน</div>'; return; }
+  grid.innerHTML = users.map(([id,u])=>`
+    <label class="team-checkbox-item">
+      <input type="checkbox" name="teamMember" value="${id}">
+      <span>${u.name} <small class="text-muted">(${u.position||id})</small></span>
     </label>
   `).join('');
 }
 
-// ============================================================
-// VEHICLE / PUMP DROPDOWNS
-// ============================================================
-function populateVehicleDropdown() {
-  const sel = document.getElementById('f-vehicle');
-  const activeVehicles = new Set(window.appState.reports.filter(r => r.status === 'active' && r.vehicleId).map(r => r.vehicleId));
-  sel.innerHTML = '<option value="">-- ไม่ใช้รถ --</option>';
-  window.appState.vehicles.forEach(v => {
-    const busy = activeVehicles.has(v.id);
-    sel.innerHTML += `<option value="${v.id}" ${busy ? 'disabled' : ''}>${v.plate} - ${v.brand} ${v.model}${busy ? ' (ไม่ว่าง)' : ''}</option>`;
-  });
-}
-
-function populatePumpDropdown() {
-  const sel = document.getElementById('f-pump');
-  const activePumps = new Set(window.appState.reports.filter(r => r.status === 'active' && r.pumpId).map(r => r.pumpId));
-  sel.innerHTML = '<option value="">-- ไม่ใช้เครื่องสูบน้ำ --</option>';
-  window.appState.pumps.forEach(p => {
-    const busy = activePumps.has(p.id);
-    sel.innerHTML += `<option value="${p.id}" ${busy ? 'disabled' : ''}>${p.serial} - ${p.brand} ${p.model}${busy ? ' (ไม่ว่าง)' : ''}</option>`;
-  });
-}
-
-// ============================================================
-// SUBMIT REPORT
-// ============================================================
-window.submitReport = async function() {
-  const { db, collection, addDoc, serverTimestamp, storage, ref, uploadBytes, getDownloadURL } = window._fb;
-
-  const date = document.getElementById('f-date').value;
-  const time = document.getElementById('f-time').value;
-  const vehicleId = document.getElementById('f-vehicle').value;
-  const pumpId = document.getElementById('f-pump').value;
-  const missionType = document.getElementById('f-mission-type').value;
-  const detail = document.getElementById('f-detail').value.trim();
-  const location = document.getElementById('f-location').value.trim();
-  const problem = document.getElementById('f-problem').value.trim();
-  const suggestion = document.getElementById('f-suggestion').value.trim();
-  const lat = document.getElementById('f-lat').value;
-  const lng = document.getElementById('f-lng').value;
-  const files = document.getElementById('f-images').files;
-
-  if (!date || !time || !missionType || !detail || !location) {
-    showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน', 'error'); return;
-  }
-
-  const teamIds = Array.from(document.querySelectorAll('.team-member-cb:checked')).map(cb => cb.value);
-  const teamNames = Array.from(document.querySelectorAll('.team-member-cb:checked')).map(cb => cb.dataset.name);
-
-  const btn = document.getElementById('submit-btn');
-  btn.innerHTML = '<span class="spinner"></span> กำลังบันทึก...';
-  btn.disabled = true;
-
-  try {
-    // Upload images
-    const imageUrls = [];
-    for (const file of files) {
-      const path = `reports/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      imageUrls.push({ url, path });
-    }
-
-    const v = window.appState.vehicles.find(x => x.id === vehicleId);
-    const p = window.appState.pumps.find(x => x.id === pumpId);
-    const me = window.appState.currentUserData;
-
-    const docData = {
-      date, time,
-      vehicleId: vehicleId || null,
-      vehicleInfo: v ? `${v.plate} (${v.brand} ${v.model})` : null,
-      pumpId: pumpId || null,
-      pumpInfo: p ? `${p.serial} (${p.brand} ${p.model})` : null,
-      teamIds, teamNames,
-      missionType, detail, location, problem, suggestion,
-      lat: lat || null, lng: lng || null,
-      images: imageUrls,
-      reporterId: me.id,
-      reporterName: me.name,
-      reporterEmpId: me.empid,
-      status: 'active',
-      createdAt: serverTimestamp(),
-      endedAt: null, endTime: null
-    };
-
-    await addDoc(collection(db, 'reports'), docData);
-    showToast('บันทึกรายงานสำเร็จ!', 'success');
-    resetForm();
-    showSection('history');
-  } catch (e) {
-    showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
-  } finally {
-    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>บันทึกรายงาน';
-    btn.disabled = false;
-  }
+window.getGPS = function() {
+  if (!navigator.geolocation) { toast('อุปกรณ์ไม่รองรับ GPS','error'); return; }
+  document.getElementById('gpsStatus').textContent = 'กำลังรับพิกัด...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    gpsData = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+    document.getElementById('gpsStatus').innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>รับพิกัดสำเร็จ</span>';
+    const display = document.getElementById('gpsCoordsDisplay');
+    display.style.display='block';
+    display.innerHTML = `📍 Lat: ${gpsData.lat.toFixed(6)} | Lng: ${gpsData.lng.toFixed(6)}<br>
+      <a href="https://www.google.com/maps?q=${gpsData.lat},${gpsData.lng}" target="_blank" class="small text-primary">เปิดใน Google Maps</a>`;
+  }, err=>{
+    document.getElementById('gpsStatus').innerHTML = '<span class="text-danger">ไม่สามารถรับพิกัดได้</span>';
+    toast('ไม่สามารถรับพิกัด GPS: ' + err.message,'error');
+  }, { enableHighAccuracy:true, timeout:10000 });
 };
 
-function resetForm() {
-  document.getElementById('report-form').reset();
-  const now = new Date();
-  document.getElementById('f-date').value = now.toISOString().split('T')[0];
-  document.getElementById('f-time').value = now.toTimeString().slice(0,5);
-  document.getElementById('img-preview').innerHTML = '';
-  document.getElementById('gps-result').style.display = 'none';
-  document.getElementById('f-lat').value = '';
-  document.getElementById('f-lng').value = '';
-  document.querySelectorAll('.team-member-cb').forEach(cb => cb.checked = false);
+window.handleImages = function(files) {
+  const maxImages = 5;
+  Array.from(files).slice(0, maxImages - selectedImages.length).forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      selectedImages.push({ name:file.name, data:e.target.result });
+      renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+window.handleDrop = function(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('dragover');
+  handleImages(e.dataTransfer.files);
+};
+
+function renderImagePreviews() {
+  const grid = document.getElementById('imagePreviewGrid');
+  grid.innerHTML = selectedImages.map((img,i)=>`
+    <div class="preview-img-wrap">
+      <img src="${img.data}" alt="${img.name}">
+      <button class="remove-img" onclick="removeImage(${i})">✕</button>
+    </div>
+  `).join('');
 }
 
-// ============================================================
-// HISTORY
-// ============================================================
-async function loadHistory() {
-  const { db, collection, getDocs, query, orderBy, where } = window._fb;
-  const me = window.appState.currentUserData;
-  const filterType = document.getElementById('hist-filter-type').value;
-  const el = document.getElementById('history-list');
-  el.innerHTML = '<div class="col-12 text-center p-4"><span class="spinner" style="border-color:#cbd5e1;border-top-color:var(--primary);"></span></div>';
+window.removeImage = function(i) {
+  selectedImages.splice(i,1);
+  renderImagePreviews();
+};
+
+window.resetForm = function() {
+  document.getElementById('fVehicle').value='';
+  document.getElementById('fPump').value='';
+  document.getElementById('fMissionType').value='';
+  document.getElementById('fLocation').value='';
+  document.getElementById('fDetail').value='';
+  document.getElementById('fDetailFull').value='';
+  document.getElementById('fProblem').value='';
+  document.getElementById('fSolution').value='';
+  document.querySelectorAll('input[name="teamMember"]').forEach(cb=>cb.checked=false);
+  selectedImages=[];
+  gpsData=null;
+  renderImagePreviews();
+  document.getElementById('gpsStatus').textContent='ยังไม่ได้รับพิกัด';
+  document.getElementById('gpsCoordsDisplay').style.display='none';
+};
+
+window.submitReport = async function() {
+  const date = document.getElementById('fDate').value;
+  const timeStart = document.getElementById('fTimeStart').value;
+  const missionType = document.getElementById('fMissionType').value;
+  const location = document.getElementById('fLocation').value.trim();
+  const detail = document.getElementById('fDetail').value.trim();
+  if (!date||!timeStart||!missionType||!location||!detail) {
+    toast('กรุณากรอกข้อมูลที่จำเป็น (วันที่, เวลา, ประเภทภารกิจ, สถานที่, รายละเอียด)','error'); return;
+  }
+  const teamMembers = Array.from(document.querySelectorAll('input[name="teamMember"]:checked')).map(cb=>cb.value);
+  const vehicleId = document.getElementById('fVehicle').value;
+  const pumpId = document.getElementById('fPump').value;
+  const report = {
+    date, timeStart, missionType, location, detail,
+    detailFull: document.getElementById('fDetailFull').value,
+    problem: document.getElementById('fProblem').value,
+    solution: document.getElementById('fSolution').value,
+    teamMembers, vehicleId, pumpId,
+    gps: gpsData || null,
+    images: selectedImages,
+    reporterId: currentUser.empId,
+    reporterName: currentUser.name || currentUser.empId,
+    createdAt: Date.now(),
+    completed: false
+  };
   try {
-    let q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'));
-    const snap = await getDocs(q);
-    let reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (filterType) reports = reports.filter(r => r.missionType === filterType);
-    window._histReports = reports;
-    renderHistoryCards(reports, false);
-  } catch(e) {
-    el.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-exclamation-triangle text-warning"></i><div>' + e.message + '</div></div></div>';
-  }
-}
+    const newRef = push(ref(db,'reports'));
+    await set(newRef, report);
+    // Mark vehicle/pump as in use
+    if (vehicleId) await update(ref(db,`vehicles/${vehicleId}`),{ inUse:true, usedBy:currentUser.empId, usedByName:currentUser.name, usedAt:Date.now(), reportId:newRef.key });
+    if (pumpId) {
+      await update(ref(db,`pumps/${pumpId}`),{ inUse:true, usedBy:currentUser.empId, usedByName:currentUser.name, usedAt:Date.now(), usedLocation:location, reportId:newRef.key });
+    }
+    toast('บันทึกรายงานสำเร็จ ✅','success');
+    resetForm();
+    showPage('history');
+  } catch(e) { toast('เกิดข้อผิดพลาด: '+e.message,'error'); }
+};
 
-function renderHistoryCards(reports, isAdmin) {
-  const el = document.getElementById(isAdmin ? 'admin-reports-list' : 'history-list');
-  const me = window.appState.currentUserData;
-  if (!reports.length) {
-    el.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-folder-open"></i><div>ไม่พบรายงาน</div></div></div>';
-    return;
-  }
-  el.innerHTML = reports.map(r => {
-    const canEdit = isAdmin ? true : (r.reporterId === me.id);
+// ========== HISTORY ==========
+window.loadHistory = function() {
+  const list = document.getElementById('historyList');
+  const search = (document.getElementById('historySearch').value||'').toLowerCase();
+  const filterType = document.getElementById('historyFilterType').value;
+  const filterDate = document.getElementById('historyFilterDate').value;
+  let reports = Object.entries(allReports);
+  if (filterType) reports = reports.filter(([,r])=>r.missionType===filterType);
+  if (filterDate) reports = reports.filter(([,r])=>r.date===filterDate);
+  if (search) reports = reports.filter(([,r])=>(r.location||'').toLowerCase().includes(search)||(r.detail||'').toLowerCase().includes(search)||(r.reporterName||'').toLowerCase().includes(search));
+  reports.sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  if (!reports.length) { list.innerHTML='<div class="text-center p-5 text-muted"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>ไม่พบข้อมูล</div>'; return; }
+  list.innerHTML = reports.map(([id,r])=>{
+    const isOwner = currentUser.role==='admin' || r.reporterId===currentUser.empId;
     return `
-    <div class="col-md-6 col-lg-4">
-      <div class="report-card">
-        <div class="report-card-header">
-          <div>
-            ${getMissionBadge(r.missionType)}
-            <div class="fw-600 mt-1 text-sm">${r.location || '-'}</div>
-          </div>
-          <span class="badge-custom ${r.status === 'active' ? 'badge-active' : 'badge-other'}" style="flex-shrink:0;">${r.status === 'active' ? '🟢 ดำเนิน' : '✅ เสร็จ'}</span>
+    <div class="history-card ${r.missionType||''}" onclick="showReportDetail('${id}')">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+          <div class="fw-bold">${r.location||'-'}</div>
+          <div class="small text-muted">${r.date} ${r.timeStart||''} - ${r.reporterName||r.reporterId||'-'}</div>
+          <div class="small mt-1">${r.detail||''}</div>
         </div>
-        <div class="report-card-body">
-          <div class="text-sm text-muted mb-1"><i class="fas fa-clock me-1"></i>${r.date} ${r.time} น.</div>
-          <div class="text-sm mb-1"><i class="fas fa-user me-1"></i>${r.reporterName}</div>
-          <div class="text-sm text-muted" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${r.detail || '-'}</div>
-          <div class="divider"></div>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn-primary-custom btn-sm" onclick="viewReport('${r.id}')">
-              <i class="fas fa-eye me-1"></i>ดูรายละเอียด
-            </button>
-            ${canEdit && r.status === 'active' ? `
-              <button class="btn-success btn-sm" onclick="openEndMission('${r.id}')">
-                <i class="fas fa-flag-checkered me-1"></i>จบภารกิจ
-              </button>
-            ` : ''}
-            ${canEdit ? `
-              <button class="btn-danger btn-sm" onclick="deleteReport('${r.id}', ${JSON.stringify(r.images || []).replace(/"/g, '&quot;')})">
-                <i class="fas fa-trash"></i>
-              </button>
-            ` : ''}
-          </div>
+        <div class="d-flex flex-column align-items-end gap-1">
+          ${getTypeBadge(r.missionType)}
+          <span class="badge-type ${r.completed?'badge-complete':'badge-inprogress'}">${r.completed?'✅ เสร็จสิ้น':'⏳ กำลังดำเนินการ'}</span>
+          ${r.images&&r.images.length?`<span class="badge-type badge-other"><i class="fas fa-image me-1"></i>${r.images.length}</span>`:''}
         </div>
       </div>
+      ${isOwner?`<div class="d-flex gap-2 mt-2" onclick="event.stopPropagation()">
+        ${!r.completed?`<button class="btn btn-sm btn-success" onclick="showEndMission('${id}')"><i class="fas fa-flag-checkered me-1"></i>จบภารกิจ</button>`:''}
+        <button class="btn btn-sm btn-outline-primary" onclick="editReport('${id}')"><i class="fas fa-edit me-1"></i>แก้ไข</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${id}','report')"><i class="fas fa-trash me-1"></i>ลบ</button>
+      </div>`:''}
     </div>`;
   }).join('');
-}
+};
 
-// ============================================================
-// VIEW REPORT DETAIL
-// ============================================================
-window.viewReport = function(id) {
-  const r = [...window.appState.reports, ...(window._histReports || []), ...(window._adminReports || [])].find(x => x.id === id);
-  if (!r) { showToast('ไม่พบรายงาน', 'error'); return; }
-  const me = window.appState.currentUserData;
-  const canEdit = me.role === 'admin' || r.reporterId === me.id;
-
+window.showReportDetail = function(id) {
+  const r = allReports[id];
+  if (!r) return;
+  const vehicle = r.vehicleId && allVehicles[r.vehicleId];
+  const pump = r.pumpId && allPumps[r.pumpId];
+  const team = (r.teamMembers||[]).map(uid=>(allUsers[uid]&&allUsers[uid].name)||uid).join(', ')||'-';
+  const duration = r.completed && r.timeEnd ? calcDuration(r.timeStart, r.timeEnd) : null;
   let imagesHtml = '';
-  if (r.images && r.images.length > 0) {
-    imagesHtml = `<div class="fw-600 text-sm mb-2">รูปภาพ (${r.images.length})</div>
-      <div class="img-grid">
-        ${r.images.map(img => `<img src="${img.url}" class="img-thumb" onclick="openLightbox('${img.url}')" alt="รูปภาพ">`).join('')}
-      </div>`;
+  if (r.images && r.images.length) {
+    imagesHtml = `<div class="mt-3"><strong>รูปภาพ:</strong><div class="image-preview-grid mt-2">
+      ${r.images.map((img,i)=>`<div class="preview-img-wrap"><img src="${img.data}" style="cursor:pointer;width:80px;height:80px;object-fit:cover;border-radius:8px;" onclick="openLightbox('${id}',${i})"></div>`).join('')}
+    </div></div>`;
   }
-
-  const gpsHtml = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="resource-tag mt-2">
-    <i class="fas fa-map-marker-alt text-danger"></i> พิกัด: ${r.lat}, ${r.lng} (Google Maps)
-  </a>` : '';
-
-  document.getElementById('modal-report-content').innerHTML = `
-    <div class="row g-3 mb-3">
-      <div class="col-6"><div class="text-muted text-sm">ประเภทงาน</div><div class="mt-1">${getMissionBadge(r.missionType)}</div></div>
-      <div class="col-6"><div class="text-muted text-sm">สถานะ</div><div class="mt-1"><span class="badge-custom ${r.status === 'active' ? 'badge-active' : 'badge-other'}">${r.status === 'active' ? 'กำลังดำเนินการ' : 'เสร็จสิ้น'}</span></div></div>
-      <div class="col-6"><div class="text-muted text-sm">วันที่/เวลา</div><div class="fw-600 text-sm">${r.date} ${r.time} น.</div></div>
-      <div class="col-6"><div class="text-muted text-sm">ผู้รายงาน</div><div class="fw-600 text-sm">${r.reporterName} (${r.reporterEmpId})</div></div>
-      <div class="col-12"><div class="text-muted text-sm">สถานที่</div><div class="fw-600">${r.location}</div></div>
-    </div>
-    ${r.vehicleInfo ? `<div class="mb-2"><span class="text-muted text-sm">รถ: </span><span class="fw-600 text-sm">${r.vehicleInfo}</span></div>` : ''}
-    ${r.pumpInfo ? `<div class="mb-2"><span class="text-muted text-sm">เครื่องสูบน้ำ: </span><span class="fw-600 text-sm">${r.pumpInfo}</span></div>` : ''}
-    ${r.teamNames?.length ? `<div class="mb-2"><span class="text-muted text-sm">ทีม: </span><span class="fw-600 text-sm">${r.teamNames.join(', ')}</span></div>` : ''}
-    <div class="divider"></div>
-    <div class="mb-3">
-      <div class="text-muted text-sm mb-1">รายละเอียดงาน</div>
-      <div style="background:var(--bg);border-radius:8px;padding:0.75rem;font-size:0.875rem;">${r.detail || '-'}</div>
-    </div>
-    ${r.problem ? `<div class="mb-3"><div class="text-muted text-sm mb-1">ปัญหาที่พบ</div><div style="background:#fff7ed;border-radius:8px;padding:0.75rem;font-size:0.875rem;">${r.problem}</div></div>` : ''}
-    ${r.suggestion ? `<div class="mb-3"><div class="text-muted text-sm mb-1">การแก้ไข/ข้อเสนอแนะ</div><div style="background:#f0fdf4;border-radius:8px;padding:0.75rem;font-size:0.875rem;">${r.suggestion}</div></div>` : ''}
-    ${gpsHtml}
-    ${r.endedAt ? `<div class="mt-3 p-3 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;">
-      <i class="fas fa-flag-checkered text-success me-2"></i>
-      <strong>จบภารกิจ:</strong> ${formatDateTime(r.endedAt)} — ระยะเวลารวม: <strong>${calcDuration(r.createdAt, r.endedAt)}</strong>
-    </div>` : ''}
-    ${imagesHtml}
-  `;
-
-  document.getElementById('modal-report-footer').innerHTML = `
-    ${canEdit && r.status === 'active' ? `<button class="btn-success" onclick="closeModal('modal-report-detail');openEndMission('${r.id}')"><i class="fas fa-flag-checkered me-2"></i>จบภารกิจ</button>` : ''}
-    <button class="btn-outline" onclick="closeModal('modal-report-detail')">ปิด</button>
-  `;
-  openModal('modal-report-detail');
+  document.getElementById('reportDetailBody').innerHTML = `
+    <div class="row g-3">
+      <div class="col-md-6"><strong>วันที่:</strong> ${r.date}</div>
+      <div class="col-md-6"><strong>เวลาเริ่ม:</strong> ${r.timeStart||'-'}</div>
+      ${r.completed?`<div class="col-md-6"><strong>เวลาสิ้นสุด:</strong> ${r.timeEnd||'-'}</div><div class="col-md-6"><strong>รวมเวลา:</strong> ${duration||'-'}</div>`:''}
+      <div class="col-12"><strong>ประเภทภารกิจ:</strong> ${getTypeBadge(r.missionType)}</div>
+      <div class="col-md-6"><strong>สถานที่:</strong> ${r.location||'-'}</div>
+      <div class="col-md-6"><strong>ผู้รายงาน:</strong> ${r.reporterName||r.reporterId||'-'}</div>
+      <div class="col-12"><strong>รายละเอียด:</strong> ${r.detail||'-'}</div>
+      ${r.detailFull?`<div class="col-12"><strong>รายละเอียดเพิ่มเติม:</strong><br>${r.detailFull}</div>`:''}
+      ${r.problem?`<div class="col-md-6"><strong>ปัญหาที่พบ:</strong><br>${r.problem}</div>`:''}
+      ${r.solution?`<div class="col-md-6"><strong>การแก้ไข/ข้อเสนอแนะ:</strong><br>${r.solution}</div>`:''}
+      <div class="col-md-6"><strong>รถที่ใช้:</strong> ${vehicle?`${vehicle.plate} ${vehicle.brand} ${vehicle.model}`:'-'}</div>
+      <div class="col-md-6"><strong>เครื่องสูบน้ำ:</strong> ${pump?`${pump.assetNo} ${pump.brand} ${pump.model}`:'-'}</div>
+      <div class="col-12"><strong>ทีมงาน:</strong> ${team}</div>
+      ${r.gps?`<div class="col-12"><strong>พิกัด GPS:</strong> <code>${r.gps.lat.toFixed(6)}, ${r.gps.lng.toFixed(6)}</code> <a href="https://www.google.com/maps?q=${r.gps.lat},${r.gps.lng}" target="_blank" class="btn btn-outline-secondary btn-sm ms-2"><i class="fas fa-map-marker-alt"></i> Maps</a></div>`:''}
+      <div class="col-12">${imagesHtml}</div>
+    </div>`;
+  document.getElementById('reportDetailModal').classList.add('show');
 };
 
-// ============================================================
-// END MISSION
-// ============================================================
-window._endMissionId = null;
-window.openEndMission = function(id) {
-  window._endMissionId = id;
-  const r = [...window.appState.reports, ...(window._histReports || [])].find(x => x.id === id);
-  document.getElementById('end-mission-content').innerHTML = `
-    <p>คุณต้องการจบภารกิจนี้หรือไม่?</p>
-    <div class="p-3 rounded mb-3" style="background:var(--bg);">
-      <div>${getMissionBadge(r?.missionType)}</div>
-      <div class="fw-600 mt-1">${r?.location || '-'}</div>
-      <div class="text-sm text-muted">เริ่ม: ${r?.date} ${r?.time} น.</div>
-    </div>
-    <p class="text-muted text-sm">ระบบจะบันทึกเวลาจบภารกิจ คืนรถ และคำนวณเวลารวม</p>
-  `;
-  openModal('modal-end-mission');
+window.openLightbox = function(reportId, imgIndex) {
+  const r = allReports[reportId];
+  if (!r||!r.images[imgIndex]) return;
+  document.getElementById('lightboxImg').src = r.images[imgIndex].data;
+  document.getElementById('lightboxModal').classList.add('show');
 };
 
-window.confirmEndMission = async function() {
-  const id = window._endMissionId;
-  if (!id) return;
-  const { db, doc, updateDoc, serverTimestamp } = window._fb;
-  try {
-    await updateDoc(doc(db, 'reports', id), {
-      status: 'done',
-      endedAt: serverTimestamp()
-    });
-    closeModal('modal-end-mission');
-    showToast('จบภารกิจเรียบร้อย!', 'success');
-    loadHistory();
-  } catch(e) {
-    showToast('เกิดข้อผิดพลาด', 'error');
-  }
+window.showEndMission = function(id) {
+  const r = allReports[id];
+  if (!r) return;
+  const now = new Date().toTimeString().slice(0,5);
+  document.getElementById('endMissionTime').value = now;
+  document.getElementById('endMissionSummary').style.display='none';
+  document.getElementById('confirmEndMissionBtn').onclick = async function() {
+    const endTime = document.getElementById('endMissionTime').value;
+    const duration = calcDuration(r.timeStart, endTime);
+    await update(ref(db,`reports/${id}`), { completed:true, timeEnd:endTime });
+    // Release vehicle/pump
+    if (r.vehicleId) await update(ref(db,`vehicles/${r.vehicleId}`), { inUse:false, usedBy:null, usedByName:null, usedAt:null, reportId:null });
+    if (r.pumpId) await update(ref(db,`pumps/${r.pumpId}`), { inUse:false, usedBy:null, usedByName:null, usedAt:null, usedLocation:null, reportId:null });
+    const sumEl = document.getElementById('endMissionSummary');
+    sumEl.style.display='block';
+    sumEl.innerHTML = `<i class="fas fa-check-circle me-2"></i>จบภารกิจสำเร็จ! รวมเวลา: <strong>${duration||'N/A'}</strong>`;
+    toast('จบภารกิจและคืนรถ/เครื่องสูบแล้ว ✅','success');
+    setTimeout(()=>closeModal('endMissionModal'), 2500);
+  };
+  document.getElementById('endMissionModal').classList.add('show');
 };
 
-// ============================================================
-// DELETE REPORT
-// ============================================================
-window.deleteReport = async function(id, images) {
-  if (!confirm('ยืนยันการลบรายงานนี้?')) return;
-  const { db, doc, deleteDoc, storage, ref, deleteObject } = window._fb;
-  try {
-    if (images && images.length) {
-      for (const img of images) {
-        try { await deleteObject(ref(storage, img.path)); } catch(e){}
-      }
+window.editReport = function(id) {
+  const r = allReports[id];
+  if (!r) return;
+  if (r.reporterId !== currentUser.empId && currentUser.role !== 'admin') { toast('ไม่มีสิทธิ์แก้ไข','error'); return; }
+  // Pre-fill form
+  document.getElementById('fDate').value = r.date||'';
+  document.getElementById('fTimeStart').value = r.timeStart||'';
+  document.getElementById('fMissionType').value = r.missionType||'';
+  document.getElementById('fLocation').value = r.location||'';
+  document.getElementById('fDetail').value = r.detail||'';
+  document.getElementById('fDetailFull').value = r.detailFull||'';
+  document.getElementById('fProblem').value = r.problem||'';
+  document.getElementById('fSolution').value = r.solution||'';
+  if (r.gps) { gpsData = r.gps; document.getElementById('gpsCoordsDisplay').style.display='block'; document.getElementById('gpsCoordsDisplay').innerHTML=`📍 Lat: ${r.gps.lat.toFixed(6)} | Lng: ${r.gps.lng.toFixed(6)}`; document.getElementById('gpsStatus').innerHTML='<span class="text-success">มีพิกัดเดิม</span>'; }
+  selectedImages = r.images || [];
+  renderImagePreviews();
+  // Override submit to update
+  const origSubmit = window.submitReport;
+  window.submitReport = async function() {
+    const updatedReport = {
+      date: document.getElementById('fDate').value,
+      timeStart: document.getElementById('fTimeStart').value,
+      missionType: document.getElementById('fMissionType').value,
+      location: document.getElementById('fLocation').value,
+      detail: document.getElementById('fDetail').value,
+      detailFull: document.getElementById('fDetailFull').value,
+      problem: document.getElementById('fProblem').value,
+      solution: document.getElementById('fSolution').value,
+      teamMembers: Array.from(document.querySelectorAll('input[name="teamMember"]:checked')).map(cb=>cb.value),
+      vehicleId: document.getElementById('fVehicle').value,
+      pumpId: document.getElementById('fPump').value,
+      gps: gpsData||null, images: selectedImages,
+      reporterId: r.reporterId, reporterName: r.reporterName,
+      createdAt: r.createdAt, completed: r.completed
+    };
+    await update(ref(db,`reports/${id}`), updatedReport);
+    toast('แก้ไขรายงานสำเร็จ ✅','success');
+    window.submitReport = origSubmit;
+    resetForm();
+    showPage('history');
+  };
+  showPage('newReport');
+  document.querySelector('#pageNewReport .btn-primary-custom').innerHTML='<i class="fas fa-save me-2"></i>อัปเดตรายงาน';
+  toast('กำลังแก้ไขรายงาน...','');
+};
+
+window.confirmDelete = function(id, type) {
+  document.getElementById('confirmDeleteText').textContent = 'คุณต้องการลบรายการนี้ใช่หรือไม่? ไม่สามารถย้อนกลับได้';
+  document.getElementById('confirmDeleteBtn').onclick = async function() {
+    if (type==='report') {
+      const r = allReports[id];
+      if (r&&r.vehicleId) await update(ref(db,`vehicles/${r.vehicleId}`),{inUse:false,usedBy:null,usedByName:null,usedAt:null,reportId:null});
+      if (r&&r.pumpId) await update(ref(db,`pumps/${r.pumpId}`),{inUse:false,usedBy:null,usedByName:null,usedAt:null,usedLocation:null,reportId:null});
+      await remove(ref(db,`reports/${id}`));
+      toast('ลบรายงานแล้ว','success');
+    } else if (type==='user') {
+      await remove(ref(db,`users/${id}`));
+      toast('ลบพนักงานแล้ว','success');
+    } else if (type==='vehicle') {
+      await remove(ref(db,`vehicles/${id}`));
+      toast('ลบรถแล้ว','success');
+    } else if (type==='pump') {
+      await remove(ref(db,`pumps/${id}`));
+      toast('ลบเครื่องสูบน้ำแล้ว','success');
     }
-    await deleteDoc(doc(db, 'reports', id));
-    showToast('ลบรายงานสำเร็จ', 'success');
-    loadHistory();
-  } catch(e) {
-    showToast('เกิดข้อผิดพลาด', 'error');
-  }
+    closeModal('confirmDeleteModal');
+  };
+  document.getElementById('confirmDeleteModal').classList.add('show');
 };
 
-// ============================================================
-// AVAILABLE VEHICLES / PUMPS
-// ============================================================
+// ========== VEHICLE/PUMP STATUS ==========
 window.showAvailableVehicles = function() {
-  const busyIds = new Set(window.appState.reports.filter(r => r.status === 'active' && r.vehicleId).map(r => r.vehicleId));
-  const avail = window.appState.vehicles.filter(v => !busyIds.has(v.id));
-  const busy = window.appState.vehicles.filter(v => busyIds.has(v.id));
-  document.getElementById('modal-vehicles-content').innerHTML = `
-    <div class="mb-3">
-      <div class="fw-600 mb-2 text-success"><i class="fas fa-check-circle me-2"></i>พร้อมใช้งาน (${avail.length})</div>
-      ${avail.length ? avail.map(v => `<div class="p-2 mb-1 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;font-size:0.875rem;">
-        <i class="fas fa-car me-2 text-success"></i><strong>${v.plate}</strong> — ${v.brand} ${v.model}
-      </div>`).join('') : '<div class="text-muted text-sm">ไม่มีรถว่าง</div>'}
-    </div>
-    <div>
-      <div class="fw-600 mb-2 text-danger"><i class="fas fa-times-circle me-2"></i>ไม่ว่าง (${busy.length})</div>
-      ${busy.length ? busy.map(v => {
-        const r = window.appState.reports.find(r => r.vehicleId === v.id && r.status === 'active');
-        return `<div class="p-2 mb-1 rounded" style="background:#fef2f2;border:1px solid #fecaca;font-size:0.875rem;">
-          <i class="fas fa-car me-2 text-danger"></i><strong>${v.plate}</strong> — ${v.brand} ${v.model}
-          <div class="text-muted text-sm">ผู้ใช้: ${r?.reporterName || '-'} | สถานที่: ${r?.location || '-'}</div>
-        </div>`;
-      }).join('') : '<div class="text-muted text-sm">ไม่มี</div>'}
-    </div>
-  `;
-  openModal('modal-vehicles');
+  const avail = Object.entries(allVehicles).filter(([,v])=>!v.inUse);
+  const busy = Object.entries(allVehicles).filter(([,v])=>v.inUse);
+  document.getElementById('availVehiclesBody').innerHTML = `
+    <p><strong>พร้อมใช้งาน: ${avail.length}</strong> | กำลังใช้: ${busy.length}</p>
+    ${avail.length?avail.map(([,v])=>`<div class="avail-badge avail mb-1 d-block"><i class="fas fa-check-circle me-1"></i>${v.plate} - ${v.brand} ${v.model}</div>`).join(''):'<div class="text-muted">ไม่มีรถว่าง</div>'}
+    ${busy.length?`<p class="mt-3"><strong>กำลังใช้งาน:</strong></p>${busy.map(([,v])=>`<div class="avail-badge busy mb-1 d-block"><i class="fas fa-times-circle me-1"></i>${v.plate} - ${v.brand} ${v.model} (ใช้โดย: ${v.usedByName||v.usedBy||'-'})</div>`).join('')}`:''}`;
+  document.getElementById('availVehiclesModal').classList.add('show');
 };
 
 window.showAvailablePumps = function() {
-  const busyIds = new Set(window.appState.reports.filter(r => r.status === 'active' && r.pumpId).map(r => r.pumpId));
-  const avail = window.appState.pumps.filter(p => !busyIds.has(p.id));
-  const busy = window.appState.pumps.filter(p => busyIds.has(p.id));
-  document.getElementById('modal-pumps-content').innerHTML = `
-    <div class="mb-3">
-      <div class="fw-600 mb-2 text-success"><i class="fas fa-check-circle me-2"></i>พร้อมใช้งาน (${avail.length})</div>
-      ${avail.length ? avail.map(p => `<div class="p-2 mb-1 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;font-size:0.875rem;">
-        <i class="fas fa-tint me-2 text-success"></i><strong>${p.serial}</strong> — ${p.brand} ${p.model}
-      </div>`).join('') : '<div class="text-muted text-sm">ไม่มีเครื่องสูบน้ำว่าง</div>'}
-    </div>
-    <div>
-      <div class="fw-600 mb-2 text-danger"><i class="fas fa-times-circle me-2"></i>ไม่ว่าง (${busy.length})</div>
-      ${busy.length ? busy.map(p => {
-        const r = window.appState.reports.find(r => r.pumpId === p.id && r.status === 'active');
-        return `<div class="p-2 mb-1 rounded" style="background:#fef2f2;border:1px solid #fecaca;font-size:0.875rem;">
-          <i class="fas fa-tint me-2 text-danger"></i><strong>${p.serial}</strong> — ${p.brand} ${p.model}
-          <div class="text-muted text-sm">ผู้ขอใช้: ${r?.reporterName || '-'} | สถานที่: ${r?.location || '-'}</div>
-        </div>`;
-      }).join('') : '<div class="text-muted text-sm">ไม่มี</div>'}
-    </div>
-  `;
-  openModal('modal-pumps');
+  const avail = Object.entries(allPumps).filter(([,p])=>!p.inUse);
+  const busy = Object.entries(allPumps).filter(([,p])=>p.inUse);
+  document.getElementById('availPumpsBody').innerHTML = `
+    <p><strong>พร้อมใช้งาน: ${avail.length}</strong> | กำลังใช้: ${busy.length}</p>
+    ${avail.length?avail.map(([,p])=>`<div class="avail-badge avail mb-1 d-block"><i class="fas fa-check-circle me-1"></i>${p.assetNo} - ${p.brand} ${p.model}</div>`).join(''):'<div class="text-muted">ไม่มีเครื่องสูบว่าง</div>'}
+    ${busy.length?`<p class="mt-3"><strong>กำลังใช้งาน:</strong></p>${busy.map(([,p])=>`<div class="avail-badge busy mb-1 d-block"><i class="fas fa-times-circle me-1"></i>${p.assetNo} - ${p.brand} ${p.model}<br><small>ผู้ขอใช้: ${p.usedByName||'-'} | สถานที่: ${p.usedLocation||'-'}</small></div>`).join('')}`:''}`;
+  document.getElementById('availPumpsModal').classList.add('show');
 };
 
-// ============================================================
-// SUMMARY / CHARTS
-// ============================================================
-window._chart1 = null;
-window._chart2 = null;
+function loadVehicleStatus() {
+  const total = Object.values(allVehicles).length;
+  const avail = Object.values(allVehicles).filter(v=>!v.inUse).length;
+  const busy = total - avail;
+  document.getElementById('vTotalCount').textContent=total;
+  document.getElementById('vAvailCount').textContent=avail;
+  document.getElementById('vBusyCount').textContent=busy;
+  const grid = document.getElementById('vehicleStatusGrid');
+  if (!grid) return;
+  if (!total) { grid.innerHTML='<div class="text-muted">ยังไม่มีรถในระบบ</div>'; return; }
+  grid.innerHTML = Object.entries(allVehicles).map(([id,v])=>`
+    <div class="resource-card ${v.inUse?'busy':''}">
+      <div class="d-flex justify-content-between">
+        <div class="rc-title">${v.plate}</div>
+        <span class="avail-badge ${v.inUse?'busy':'avail'}">${v.inUse?'กำลังใช้':'ว่าง'}</span>
+      </div>
+      <div class="rc-sub">${v.brand||''} ${v.model||''} ${v.type?`| ${v.type}`:''}</div>
+      ${v.inUse?`<div class="rc-sub mt-1">ใช้โดย: ${v.usedByName||'-'}</div>`:''}
+    </div>
+  `).join('');
+}
 
-async function loadSummary() {
-  const { db, collection, getDocs, query, orderBy } = window._fb;
-  const period = document.getElementById('sum-period').value;
-  const snap = await getDocs(query(collection(db, 'reports'), orderBy('createdAt', 'desc')));
-  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+function loadPumpStatus() {
+  const total = Object.values(allPumps).length;
+  const avail = Object.values(allPumps).filter(p=>!p.inUse).length;
+  const busy = total - avail;
+  document.getElementById('pTotalCount').textContent=total;
+  document.getElementById('pAvailCount').textContent=avail;
+  document.getElementById('pBusyCount').textContent=busy;
+  const grid = document.getElementById('pumpStatusGrid');
+  if (!grid) return;
+  if (!total) { grid.innerHTML='<div class="text-muted">ยังไม่มีเครื่องสูบน้ำในระบบ</div>'; return; }
+  grid.innerHTML = Object.entries(allPumps).map(([id,p])=>`
+    <div class="resource-card ${p.inUse?'busy':''}">
+      <div class="d-flex justify-content-between">
+        <div class="rc-title">${p.assetNo}</div>
+        <span class="avail-badge ${p.inUse?'busy':'avail'}">${p.inUse?'กำลังใช้':'ว่าง'}</span>
+      </div>
+      <div class="rc-sub">${p.brand||''} ${p.model||''}</div>
+      ${p.inUse?`<div class="rc-sub mt-1">ผู้ขอใช้: ${p.usedByName||'-'}<br>สถานที่: ${p.usedLocation||'-'}</div>`:''}
+    </div>
+  `).join('');
+}
 
+// ========== SUMMARY CHARTS ==========
+window.setSummaryFilter = function(filter, btn) {
+  summaryFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderSummaryCharts();
+};
+
+function getFilteredReports() {
   const now = new Date();
-  let filtered = all.filter(r => {
-    const d = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt || 0);
-    if (period === 'day') return d.toDateString() === now.toDateString();
-    if (period === 'week') { const w = new Date(now); w.setDate(w.getDate()-7); return d >= w; }
-    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    if (period === 'year') return d.getFullYear() === now.getFullYear();
+  return Object.values(allReports).filter(r=>{
+    if (!r.date) return false;
+    const d = new Date(r.date);
+    if (summaryFilter==='day') return r.date===now.toISOString().split('T')[0];
+    if (summaryFilter==='week') { const startOfWeek=new Date(now); startOfWeek.setDate(now.getDate()-now.getDay()); return d>=startOfWeek; }
+    if (summaryFilter==='month') return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    if (summaryFilter==='year') return d.getFullYear()===now.getFullYear();
     return true;
   });
+}
 
-  const typeCounts = { fire: 0, water: 0, accident: 0, search: 0, other: 0 };
-  filtered.forEach(r => { if (typeCounts[r.missionType] !== undefined) typeCounts[r.missionType]++; else typeCounts.other++; });
+function renderSummaryCharts() {
+  const reports = getFilteredReports();
+  const typeCounts = { fire:0, water:0, accident:0, search:0, other:0 };
+  reports.forEach(r=>{ typeCounts[r.missionType] = (typeCounts[r.missionType]||0)+1; });
+  const labels = ['อัคคีภัย','กู้ภัยทางน้ำ','อุบัติเหตุ','ค้นหาผู้สูญหาย','อื่นๆ'];
+  const data = Object.values(typeCounts);
+  const colors = ['#e63946','#219ebc','#f4a261','#2a9d8f','#adb5bd'];
 
-  if (window._chart1) window._chart1.destroy();
-  window._chart1 = new Chart(document.getElementById('chart-type'), {
-    type: 'doughnut',
-    data: {
-      labels: ['อัคคีภัย', 'กู้ภัยทางน้ำ', 'อุบัติเหตุ', 'ค้นหาผู้สูญหาย', 'อื่นๆ'],
-      datasets: [{ data: Object.values(typeCounts), backgroundColor: ['#dc2626','#2563eb','#d97706','#7c3aed','#64748b'], borderWidth: 0 }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 12 }, padding: 16 } } } }
+  // Bar
+  const barCtx = document.getElementById('summaryBarChart').getContext('2d');
+  if (summaryBarChartInst) summaryBarChartInst.destroy();
+  summaryBarChartInst = new Chart(barCtx, {
+    type:'bar', data:{ labels, datasets:[{ label:'จำนวนภารกิจ', data, backgroundColor:colors, borderRadius:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, ticks:{stepSize:1} } } }
   });
 
-  // Trend
-  const trendData = {};
-  filtered.forEach(r => {
-    const d = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt || 0);
-    let key;
-    if (period === 'day') key = d.toLocaleTimeString('th-TH', { hour: '2-digit' });
-    else if (period === 'week' || period === 'month') key = d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short' });
-    else key = d.toLocaleDateString('th-TH', { month: 'short' });
-    trendData[key] = (trendData[key] || 0) + 1;
+  // Pie
+  const pieCtx = document.getElementById('summaryPieChart').getContext('2d');
+  if (summaryPieChartInst) summaryPieChartInst.destroy();
+  summaryPieChartInst = new Chart(pieCtx, {
+    type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Sarabun'}, boxWidth:14 } } } }
   });
 
-  if (window._chart2) window._chart2.destroy();
-  window._chart2 = new Chart(document.getElementById('chart-trend'), {
-    type: 'bar',
-    data: {
-      labels: Object.keys(trendData),
-      datasets: [{ label: 'จำนวนภารกิจ', data: Object.values(trendData), backgroundColor: '#2563a8', borderRadius: 6 }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { font: { family: 'Sarabun', size: 12 } } } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-    }
+  // Line - group by date
+  const dateMap = {};
+  reports.forEach(r=>{ dateMap[r.date]=(dateMap[r.date]||0)+1; });
+  const sortedDates = Object.keys(dateMap).sort();
+  const lineCtx = document.getElementById('summaryLineChart').getContext('2d');
+  if (summaryLineChartInst) summaryLineChartInst.destroy();
+  summaryLineChartInst = new Chart(lineCtx, {
+    type:'line',
+    data:{ labels:sortedDates, datasets:[{ label:'จำนวนภารกิจ', data:sortedDates.map(d=>dateMap[d]), borderColor:'#2563a8', backgroundColor:'rgba(37,99,168,0.1)', fill:true, tension:0.3, pointRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, ticks:{stepSize:1} } } }
   });
 }
 
-// ============================================================
-// ADMIN: EMPLOYEES
-// ============================================================
-async function loadEmployees() {
-  const { db, collection, getDocs } = window._fb;
-  const snap = await getDocs(collection(db, 'users'));
-  window.appState.employees = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const tbody = document.getElementById('employees-tbody');
-  tbody.innerHTML = window.appState.employees.map(e => `
+// ========== ADMIN: USERS ==========
+window.showAddUserModal = function() {
+  document.getElementById('addUserModalTitle').innerHTML='<i class="fas fa-user-plus me-2"></i>เพิ่มพนักงาน';
+  document.getElementById('editUserId').value='';
+  document.getElementById('newEmpId').value='';
+  document.getElementById('newEmpId').disabled=false;
+  document.getElementById('newEmpName').value='';
+  document.getElementById('newEmpPosition').value='';
+  document.getElementById('newEmpPassword').value='';
+  document.getElementById('newEmpRole').value='user';
+  document.getElementById('addUserModal').classList.add('show');
+};
+
+window.saveUser = async function() {
+  const empId = document.getElementById('newEmpId').value.trim();
+  const name = document.getElementById('newEmpName').value.trim();
+  const position = document.getElementById('newEmpPosition').value.trim();
+  const password = document.getElementById('newEmpPassword').value;
+  const role = document.getElementById('newEmpRole').value;
+  const editId = document.getElementById('editUserId').value;
+  if (!empId||!name) { toast('กรุณากรอกรหัสพนักงานและชื่อ','error'); return; }
+  const existSnap = await get(ref(db,'users/'+empId));
+  if (!editId && existSnap.exists()) { toast('รหัสพนักงานนี้มีอยู่แล้ว','error'); return; }
+  const userData = { empId, name, position, role };
+  if (password) userData.password = password;
+  if (editId) {
+    await update(ref(db,'users/'+editId), userData);
+    toast('แก้ไขข้อมูลพนักงานแล้ว','success');
+  } else {
+    if (!password) { toast('กรุณาตั้งรหัสผ่าน','error'); return; }
+    await set(ref(db,'users/'+empId), userData);
+    toast('เพิ่มพนักงานแล้ว ✅','success');
+  }
+  closeModal('addUserModal');
+};
+
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+  const users = Object.entries(allUsers);
+  if (!users.length) { tbody.innerHTML='<tr><td colspan="5" class="text-center p-3 text-muted">ยังไม่มีพนักงาน</td></tr>'; return; }
+  tbody.innerHTML = users.map(([id,u])=>`
     <tr>
-      <td><span class="fw-600">${e.empid}</span></td>
-      <td>${e.name}</td>
-      <td>${e.position || '-'}</td>
-      <td><span class="badge-custom ${e.role === 'admin' ? 'badge-admin' : 'badge-user'}">${e.role === 'admin' ? '👑 Admin' : '👤 User'}</span></td>
+      <td><code>${id}</code></td>
+      <td>${u.name||'-'}</td>
+      <td>${u.position||'-'}</td>
+      <td><span class="badge ${u.role==='admin'?'bg-warning text-dark':'bg-primary'}">${u.role==='admin'?'👑 Admin':'👤 User'}</span></td>
       <td>
-        <button class="btn-outline btn-sm me-1" onclick="editEmployee('${e.id}')"><i class="fas fa-edit"></i></button>
-        <button class="btn-danger btn-sm" onclick="deleteEmployee('${e.id}', '${e.name}')"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser('${id}')"><i class="fas fa-edit"></i></button>
+        ${id!==currentUser.empId?`<button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${id}','user')"><i class="fas fa-trash"></i></button>`:''}
       </td>
     </tr>
   `).join('');
 }
 
-window.openAddEmployeeModal = function() {
-  document.getElementById('emp-edit-id').value = '';
-  document.getElementById('emp-empid').value = '';
-  document.getElementById('emp-name').value = '';
-  document.getElementById('emp-position').value = '';
-  document.getElementById('emp-pass').value = '';
-  document.getElementById('emp-role').value = 'user';
-  document.getElementById('emp-modal-title').innerHTML = '<i class="fas fa-user-plus me-2"></i>เพิ่มพนักงาน';
-  document.getElementById('emp-empid').disabled = false;
-  document.getElementById('pass-required').style.display = 'inline';
-  document.getElementById('pass-hint').textContent = 'อย่างน้อย 6 ตัวอักษร';
-  openModal('modal-add-employee');
+window.editUser = function(id) {
+  const u = allUsers[id];
+  if (!u) return;
+  document.getElementById('addUserModalTitle').innerHTML='<i class="fas fa-user-edit me-2"></i>แก้ไขพนักงาน';
+  document.getElementById('editUserId').value=id;
+  document.getElementById('newEmpId').value=u.empId||id;
+  document.getElementById('newEmpId').disabled=true;
+  document.getElementById('newEmpName').value=u.name||'';
+  document.getElementById('newEmpPosition').value=u.position||'';
+  document.getElementById('newEmpPassword').value='';
+  document.getElementById('newEmpRole').value=u.role||'user';
+  document.getElementById('addUserModal').classList.add('show');
 };
 
-window.editEmployee = function(id) {
-  const e = window.appState.employees.find(x => x.id === id);
-  if (!e) return;
-  document.getElementById('emp-edit-id').value = id;
-  document.getElementById('emp-empid').value = e.empid;
-  document.getElementById('emp-empid').disabled = true;
-  document.getElementById('emp-name').value = e.name;
-  document.getElementById('emp-position').value = e.position || '';
-  document.getElementById('emp-pass').value = '';
-  document.getElementById('emp-role').value = e.role;
-  document.getElementById('emp-modal-title').innerHTML = '<i class="fas fa-user-edit me-2"></i>แก้ไขพนักงาน';
-  document.getElementById('pass-required').style.display = 'none';
-  document.getElementById('pass-hint').textContent = 'เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน';
-  openModal('modal-add-employee');
-};
-
-window.saveEmployee = async function() {
-  const editId = document.getElementById('emp-edit-id').value;
-  const empid = document.getElementById('emp-empid').value.trim();
-  const name = document.getElementById('emp-name').value.trim();
-  const position = document.getElementById('emp-position').value.trim();
-  const pass = document.getElementById('emp-pass').value;
-  const role = document.getElementById('emp-role').value;
-  if (!empid || !name) { showToast('กรุณากรอกรหัสพนักงานและชื่อ', 'error'); return; }
-
-  const { db, doc, setDoc, updateDoc, createUserWithEmailAndPassword, auth } = window._fb;
-  try {
-    if (!editId) {
-      if (!pass || pass.length < 6) { showToast('กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัว', 'error'); return; }
-      const email = empid.toLowerCase() + '@ops.local';
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await setDoc(doc(db, 'users', cred.user.uid), { empid, name, position, role, email, createdAt: new Date() });
-      showToast(`เพิ่มพนักงาน ${name} สำเร็จ`, 'success');
-    } else {
-      const upd = { name, position, role };
-      await updateDoc(doc(db, 'users', editId), upd);
-      showToast(`แก้ไขข้อมูล ${name} สำเร็จ`, 'success');
-    }
-    closeModal('modal-add-employee');
-    await loadAllData();
-    loadEmployees();
-    buildTeamChecklist();
-  } catch(e) {
-    showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
-  }
-};
-
-window.deleteEmployee = async function(id, name) {
-  if (!confirm(`ต้องการลบพนักงาน "${name}" หรือไม่?`)) return;
-  const { db, doc, deleteDoc } = window._fb;
-  try {
-    await deleteDoc(doc(db, 'users', id));
-    showToast(`ลบ ${name} สำเร็จ`, 'success');
-    await loadAllData();
-    loadEmployees();
-  } catch(e) {
-    showToast('เกิดข้อผิดพลาด', 'error');
-  }
-};
-
-// ============================================================
-// ADMIN: VEHICLES
-// ============================================================
-async function loadVehiclesAdmin() {
-  const { db, collection, getDocs } = window._fb;
-  const snap = await getDocs(collection(db, 'vehicles'));
-  window.appState.vehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const busyIds = new Set(window.appState.reports.filter(r => r.status === 'active' && r.vehicleId).map(r => r.vehicleId));
-  const tbody = document.getElementById('vehicles-tbody');
-  tbody.innerHTML = window.appState.vehicles.map(v => `
-    <tr>
-      <td><span class="fw-600">${v.plate}</span></td>
-      <td>${v.brand}</td>
-      <td>${v.model}</td>
-      <td><span class="badge-custom ${busyIds.has(v.id) ? 'badge-busy' : 'badge-active'}">${busyIds.has(v.id) ? '🔴 ไม่ว่าง' : '🟢 พร้อม'}</span></td>
-      <td>
-        <button class="btn-outline btn-sm me-1" onclick="editVehicle('${v.id}')"><i class="fas fa-edit"></i></button>
-        <button class="btn-danger btn-sm" onclick="deleteVehicle('${v.id}', '${v.plate}')"><i class="fas fa-trash"></i></button>
-      </td>
-    </tr>
-  `).join('');
-  populateVehicleDropdown();
-}
-
-window.openAddVehicleModal = function() {
-  document.getElementById('veh-edit-id').value = '';
-  document.getElementById('veh-plate').value = '';
-  document.getElementById('veh-brand').value = '';
-  document.getElementById('veh-model').value = '';
-  document.getElementById('veh-modal-title').innerHTML = '<i class="fas fa-car me-2"></i>เพิ่มรถ';
-  openModal('modal-add-vehicle');
-};
-
-window.editVehicle = function(id) {
-  const v = window.appState.vehicles.find(x => x.id === id);
-  if (!v) return;
-  document.getElementById('veh-edit-id').value = id;
-  document.getElementById('veh-plate').value = v.plate;
-  document.getElementById('veh-brand').value = v.brand;
-  document.getElementById('veh-model').value = v.model;
-  document.getElementById('veh-modal-title').innerHTML = '<i class="fas fa-car me-2"></i>แก้ไขรถ';
-  openModal('modal-add-vehicle');
+// ========== ADMIN: VEHICLES ==========
+window.showAddVehicleModal = function() {
+  document.getElementById('addVehicleTitle').innerHTML='<i class="fas fa-truck me-2"></i>เพิ่มรถ';
+  document.getElementById('editVehicleId').value='';
+  ['vPlate','vBrand','vModel','vType'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addVehicleModal').classList.add('show');
 };
 
 window.saveVehicle = async function() {
-  const id = document.getElementById('veh-edit-id').value;
-  const plate = document.getElementById('veh-plate').value.trim();
-  const brand = document.getElementById('veh-brand').value.trim();
-  const model = document.getElementById('veh-model').value.trim();
-  if (!plate) { showToast('กรุณากรอกทะเบียนรถ', 'error'); return; }
-  const { db, collection, addDoc, doc, updateDoc } = window._fb;
-  try {
-    if (!id) {
-      await addDoc(collection(db, 'vehicles'), { plate, brand, model });
-      showToast('เพิ่มรถสำเร็จ', 'success');
-    } else {
-      await updateDoc(doc(db, 'vehicles', id), { plate, brand, model });
-      showToast('แก้ไขรถสำเร็จ', 'success');
-    }
-    closeModal('modal-add-vehicle');
-    await loadAllData();
-    loadVehiclesAdmin();
-  } catch(e) { showToast('เกิดข้อผิดพลาด', 'error'); }
+  const plate = document.getElementById('vPlate').value.trim();
+  const brand = document.getElementById('vBrand').value.trim();
+  const model = document.getElementById('vModel').value.trim();
+  const type = document.getElementById('vType').value.trim();
+  if (!plate) { toast('กรุณากรอกทะเบียน','error'); return; }
+  const editId = document.getElementById('editVehicleId').value;
+  const data = { plate, brand, model, type, inUse:false };
+  if (editId) { await update(ref(db,'vehicles/'+editId), {plate,brand,model,type}); toast('แก้ไขรถแล้ว','success'); }
+  else { const nr = push(ref(db,'vehicles')); await set(nr, data); toast('เพิ่มรถแล้ว ✅','success'); }
+  closeModal('addVehicleModal');
 };
 
-window.deleteVehicle = async function(id, plate) {
-  if (!confirm(`ต้องการลบรถ "${plate}" หรือไม่?`)) return;
-  const { db, doc, deleteDoc } = window._fb;
-  try {
-    await deleteDoc(doc(db, 'vehicles', id));
-    showToast('ลบรถสำเร็จ', 'success');
-    await loadAllData();
-    loadVehiclesAdmin();
-  } catch(e) { showToast('เกิดข้อผิดพลาด', 'error'); }
-};
-
-// ============================================================
-// ADMIN: PUMPS
-// ============================================================
-async function loadPumpsAdmin() {
-  const { db, collection, getDocs } = window._fb;
-  const snap = await getDocs(collection(db, 'pumps'));
-  window.appState.pumps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const busyPumps = window.appState.reports.filter(r => r.status === 'active' && r.pumpId);
-  const tbody = document.getElementById('pumps-tbody');
-  tbody.innerHTML = window.appState.pumps.map(p => {
-    const busy = busyPumps.find(r => r.pumpId === p.id);
-    return `<tr>
-      <td><span class="fw-600">${p.serial}</span></td>
-      <td>${p.brand}</td>
-      <td>${p.model}</td>
-      <td><span class="badge-custom ${busy ? 'badge-busy' : 'badge-active'}">${busy ? '🔴 ไม่ว่าง' : '🟢 พร้อม'}</span></td>
-      <td>${busy ? `${busy.reporterName || '-'} / ${busy.location || '-'}` : '-'}</td>
+function renderVehiclesTable() {
+  const tbody = document.getElementById('vehiclesTableBody');
+  if (!tbody) return;
+  const vehicles = Object.entries(allVehicles);
+  if (!vehicles.length) { tbody.innerHTML='<tr><td colspan="3" class="text-center p-3 text-muted">ยังไม่มีรถ</td></tr>'; return; }
+  tbody.innerHTML = vehicles.map(([id,v])=>`
+    <tr>
+      <td>${v.plate} ${v.inUse?'<span class="badge bg-danger">ใช้งาน</span>':''}</td>
+      <td>${v.brand||''} ${v.model||''}</td>
       <td>
-        <button class="btn-outline btn-sm me-1" onclick="editPump('${p.id}')"><i class="fas fa-edit"></i></button>
-        <button class="btn-danger btn-sm" onclick="deletePump('${p.id}', '${p.serial}')"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editVehicle('${id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${id}','vehicle')"><i class="fas fa-trash"></i></button>
       </td>
-    </tr>`;
-  }).join('');
-  populatePumpDropdown();
+    </tr>
+  `).join('');
 }
 
-window.openAddPumpModal = function() {
-  document.getElementById('pump-edit-id').value = '';
-  document.getElementById('pump-serial').value = '';
-  document.getElementById('pump-brand').value = '';
-  document.getElementById('pump-model').value = '';
-  document.getElementById('pump-modal-title').innerHTML = '<i class="fas fa-tint me-2"></i>เพิ่มเครื่องสูบน้ำ';
-  openModal('modal-add-pump');
+window.editVehicle = function(id) {
+  const v = allVehicles[id];
+  if (!v) return;
+  document.getElementById('addVehicleTitle').innerHTML='<i class="fas fa-edit me-2"></i>แก้ไขรถ';
+  document.getElementById('editVehicleId').value=id;
+  document.getElementById('vPlate').value=v.plate||'';
+  document.getElementById('vBrand').value=v.brand||'';
+  document.getElementById('vModel').value=v.model||'';
+  document.getElementById('vType').value=v.type||'';
+  document.getElementById('addVehicleModal').classList.add('show');
 };
 
-window.editPump = function(id) {
-  const p = window.appState.pumps.find(x => x.id === id);
-  if (!p) return;
-  document.getElementById('pump-edit-id').value = id;
-  document.getElementById('pump-serial').value = p.serial;
-  document.getElementById('pump-brand').value = p.brand;
-  document.getElementById('pump-model').value = p.model;
-  document.getElementById('pump-modal-title').innerHTML = '<i class="fas fa-tint me-2"></i>แก้ไขเครื่องสูบน้ำ';
-  openModal('modal-add-pump');
+// ========== ADMIN: PUMPS ==========
+window.showAddPumpModal = function() {
+  document.getElementById('addPumpTitle').innerHTML='<i class="fas fa-water me-2"></i>เพิ่มเครื่องสูบน้ำ';
+  document.getElementById('editPumpId').value='';
+  ['pAssetNo','pBrand','pModel'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addPumpModal').classList.add('show');
 };
 
 window.savePump = async function() {
-  const id = document.getElementById('pump-edit-id').value;
-  const serial = document.getElementById('pump-serial').value.trim();
-  const brand = document.getElementById('pump-brand').value.trim();
-  const model = document.getElementById('pump-model').value.trim();
-  if (!serial) { showToast('กรุณากรอกเลขครุภัณฑ์', 'error'); return; }
-  const { db, collection, addDoc, doc, updateDoc } = window._fb;
-  try {
-    if (!id) { await addDoc(collection(db, 'pumps'), { serial, brand, model }); showToast('เพิ่มเครื่องสูบน้ำสำเร็จ', 'success'); }
-    else { await updateDoc(doc(db, 'pumps', id), { serial, brand, model }); showToast('แก้ไขสำเร็จ', 'success'); }
-    closeModal('modal-add-pump');
-    await loadAllData();
-    loadPumpsAdmin();
-  } catch(e) { showToast('เกิดข้อผิดพลาด', 'error'); }
+  const assetNo = document.getElementById('pAssetNo').value.trim();
+  const brand = document.getElementById('pBrand').value.trim();
+  const model = document.getElementById('pModel').value.trim();
+  if (!assetNo) { toast('กรุณากรอกเลขครุภัณฑ์','error'); return; }
+  const editId = document.getElementById('editPumpId').value;
+  const data = { assetNo, brand, model, inUse:false };
+  if (editId) { await update(ref(db,'pumps/'+editId), {assetNo,brand,model}); toast('แก้ไขเครื่องสูบแล้ว','success'); }
+  else { const nr = push(ref(db,'pumps')); await set(nr, data); toast('เพิ่มเครื่องสูบน้ำแล้ว ✅','success'); }
+  closeModal('addPumpModal');
 };
 
-window.deletePump = async function(id, serial) {
-  if (!confirm(`ต้องการลบ "${serial}" หรือไม่?`)) return;
-  const { db, doc, deleteDoc } = window._fb;
-  try {
-    await deleteDoc(doc(db, 'pumps', id));
-    showToast('ลบสำเร็จ', 'success');
-    await loadAllData();
-    loadPumpsAdmin();
-  } catch(e) { showToast('เกิดข้อผิดพลาด', 'error'); }
+function renderPumpsTable() {
+  const tbody = document.getElementById('pumpsTableBody');
+  if (!tbody) return;
+  const pumps = Object.entries(allPumps);
+  if (!pumps.length) { tbody.innerHTML='<tr><td colspan="3" class="text-center p-3 text-muted">ยังไม่มีเครื่องสูบ</td></tr>'; return; }
+  tbody.innerHTML = pumps.map(([id,p])=>`
+    <tr>
+      <td>${p.assetNo} ${p.inUse?'<span class="badge bg-danger">ใช้งาน</span>':''}</td>
+      <td>${p.brand||''} ${p.model||''}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editPump('${id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${id}','pump')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.editPump = function(id) {
+  const p = allPumps[id];
+  if (!p) return;
+  document.getElementById('addPumpTitle').innerHTML='<i class="fas fa-edit me-2"></i>แก้ไขเครื่องสูบน้ำ';
+  document.getElementById('editPumpId').value=id;
+  document.getElementById('pAssetNo').value=p.assetNo||'';
+  document.getElementById('pBrand').value=p.brand||'';
+  document.getElementById('pModel').value=p.model||'';
+  document.getElementById('addPumpModal').classList.add('show');
 };
 
-// ============================================================
-// ADMIN: ALL REPORTS
-// ============================================================
-async function loadAdminReports() {
-  const { db, collection, getDocs, query, orderBy } = window._fb;
-  const filterType = document.getElementById('admin-filter-type').value;
-  const filterDate = document.getElementById('admin-filter-date').value;
-  const snap = await getDocs(query(collection(db, 'reports'), orderBy('createdAt', 'desc')));
-  let reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  if (filterType) reports = reports.filter(r => r.missionType === filterType);
-  if (filterDate) reports = reports.filter(r => r.date === filterDate);
-  window._adminReports = reports;
-  renderHistoryCards(reports, true);
-}
+// ========== MODAL ==========
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('show');
+};
+document.querySelectorAll('.modal-overlay').forEach(mo => {
+  mo.addEventListener('click', e => { if (e.target===mo) mo.classList.remove('show'); });
+});
 
-// ============================================================
-// EXPORT
-// ============================================================
-function exportToCSV(reports, filename) {
-  const headers = ['วันที่','เวลา','ผู้รายงาน','ประเภทงาน','สถานที่','รถ','เครื่องสูบน้ำ','ทีม','รายละเอียด','ปัญหา','ข้อเสนอแนะ','GPS Lat','GPS Lng','สถานะ'];
-  const rows = reports.map(r => [
-    r.date, r.time, r.reporterName,
-    { fire:'อัคคีภัย',water:'กู้ภัยทางน้ำ',accident:'อุบัติเหตุ',search:'ค้นหาผู้สูญหาย',other:'อื่นๆ' }[r.missionType]||r.missionType,
-    r.location, r.vehicleInfo||'', r.pumpInfo||'',
-    (r.teamNames||[]).join('|'), r.detail, r.problem||'', r.suggestion||'',
-    r.lat||'', r.lng||'', r.status === 'active' ? 'กำลังดำเนิน' : 'เสร็จสิ้น'
-  ].map(v => `"${String(v).replace(/"/g,'""')}"`));
-  const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-}
+// ========== EXPORT ==========
+window.exportCSV = function() {
+  const reports = Object.entries(allReports);
+  if (!reports.length) { toast('ไม่มีข้อมูลสำหรับ export','error'); return; }
+  const headers = ['รหัส','วันที่','เวลาเริ่ม','เวลาสิ้นสุด','ประเภทภารกิจ','สถานที่','รายละเอียด','ผู้รายงาน','รถ','เครื่องสูบ','สถานะ','Latitude','Longitude'];
+  const rows = reports.map(([id,r])=>[
+    id, r.date||'', r.timeStart||'', r.timeEnd||'',
+    {fire:'อัคคีภัย',water:'กู้ภัยทางน้ำ',accident:'อุบัติเหตุ',search:'ค้นหาผู้สูญหาย',other:'อื่นๆ'}[r.missionType]||r.missionType||'',
+    r.location||'', (r.detail||'').replace(/,/g,';'), r.reporterName||'',
+    r.vehicleId&&allVehicles[r.vehicleId]?allVehicles[r.vehicleId].plate:'',
+    r.pumpId&&allPumps[r.pumpId]?allPumps[r.pumpId].assetNo:'',
+    r.completed?'เสร็จสิ้น':'กำลังดำเนินการ',
+    r.gps?r.gps.lat:'', r.gps?r.gps.lng:''
+  ]);
+  const csv = [headers,...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='รายงานปฏิบัติงาน.csv'; a.click();
+  toast('Export CSV สำเร็จ ✅','success');
+};
 
-window.exportCSV = function() { exportToCSV(window._histReports || [], 'รายงาน_ปฏิบัติงาน.csv'); };
 window.exportJSON = function() {
-  const blob = new Blob([JSON.stringify(window._histReports || [], null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'รายงาน_ปฏิบัติงาน.json'; a.click();
-};
-window.exportAdminCSV = function() { exportToCSV(window._adminReports || [], 'รายงานทั้งหมด.csv'); };
-window.exportAdminJSON = function() {
-  const blob = new Blob([JSON.stringify(window._adminReports || [], null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'รายงานทั้งหมด.json'; a.click();
+  const data = { reports:allReports, exportedAt:new Date().toISOString(), exportedBy:currentUser.empId };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='รายงานปฏิบัติงาน.json'; a.click();
+  toast('Export JSON สำเร็จ ✅','success');
 };
 
-// Close modal on backdrop click
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
-});
+// historySearch enter key
+document.getElementById('historySearch').addEventListener('keyup', e => { if(e.key==='Enter') loadHistory(); });
 
-// Responsive sidebar
-window.addEventListener('resize', () => {
-  const toggle = document.getElementById('sidebar-toggle');
-  if (toggle) toggle.style.display = window.innerWidth < 768 ? 'block' : 'none';
-  if (window.innerWidth >= 768) document.getElementById('sidebar')?.classList.remove('open');
-});
 </script>
-
-<!-- Setup Guide (ลบออกเมื่อตั้งค่า Firebase แล้ว) -->
-<div id="setup-guide" style="position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:1rem 1.5rem;max-width:600px;width:90%;z-index:9998;font-size:0.82rem;font-family:'Sarabun',sans-serif;box-shadow:0 4px 15px rgba(0,0,0,0.1);">
-  <div style="font-weight:700;margin-bottom:0.5rem;color:#856404;"><i class="fas fa-cog me-2"></i>ขั้นตอนการตั้งค่า Firebase</div>
-  <ol style="margin:0;padding-left:1.25rem;color:#856404;line-height:1.8;">
-    <li>สร้าง Firebase Project ที่ <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></li>
-    <li>เปิดใช้งาน <strong>Authentication → Email/Password</strong></li>
-    <li>สร้าง <strong>Firestore Database</strong></li>
-    <li>สร้าง <strong>Storage</strong></li>
-    <li>คัดลอก Firebase Config ใส่ในโค้ดส่วน <code>firebaseConfig</code> ในไฟล์นี้</li>
-    <li>แก้ไข Firestore Rules เพื่อรองรับการใช้งาน</li>
-    <li>สร้างแอดมินแรกผ่าน Firebase Console (Authentication → Add user)</li>
-    <li>เพิ่มข้อมูล users collection ด้วย: <code>{empid, name, position, role:"admin"}</code></li>
-  </ol>
-  <button onclick="document.getElementById('setup-guide').remove()" style="margin-top:0.75rem;background:#856404;color:white;border:none;border-radius:6px;padding:0.35rem 0.875rem;font-size:0.8rem;cursor:pointer;font-family:inherit;">ปิด</button>
-</div>
-
 </body>
 </html>
