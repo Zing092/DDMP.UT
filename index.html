@@ -311,11 +311,11 @@ textarea.fc{min-height:82px;resize:vertical;}
               <label class="fl">ประเภทภารกิจ <span class="req">*</span></label>
               <select class="fs" id="fType">
                 <option value="">-- เลือกประเภทภารกิจ --</option>
-                <option value="เหตุอัคคีภัย">🔥 เหตุอัคคีภัย</option>
-                <option value="ช่วยเหลือผู้ประสบภัย">🚑 ช่วยเหลือผู้ประสบภัย</option>
-                <option value="เรื่องร้องเรียน/ขอความช่วยเหลือ">📋 เรื่องร้องเรียน/ขอความช่วยเหลือ</option>
-                <option value="ตรวจเช็คอุปกรณ์/เตรียมความพร้อม">🔧 ตรวจเช็คอุปกรณ์/เตรียมความพร้อม</option>
-                <option value="งานอื่นๆ">📌 งานอื่นๆ</option>
+                <option value="งานอัคคีภัย">งานอัคคีภัย</option>
+                <option value="งานกู้ภัยทางน้ำ">งานกู้ภัยทางน้ำ</option>
+                <option value="งานอุบัติเหตุ">งานอุบัติเหตุ</option>
+                <option value="งานค้นหาผู้ศูนย์หาย"> งานค้นหาผู้ศูนย์หาย</option>
+                <option value="งานอื่นๆ"> งานอื่นๆ</option>
               </select>
             </div>
             <div class="col-md-6"><label class="fl">สถานที่ปฏิบัติงาน <span class="req">*</span></label><input type="text" class="fc" id="fPlace" placeholder="ระบุสถานที่..."></div>
@@ -1132,71 +1132,86 @@ document.getElementById('sumD').value=new Date().toISOString().slice(0,10);
 const sc=sessionStorage.getItem('cu');
 if(sc){const e=DB.emps().find(x=>x.id===sc);if(e){CU=e;bootApp();}}
 </script>
-<!-- ===== FIREBASE REALTIME DATABASE AUTO SYNC ===== -->
-<script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, onValue } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* ==============================
-   🔥 Firebase Config ของคุณ
-================================= */
-const firebaseConfig = {
-  databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-/* ==============================
-   🚀 AUTO SYNC localStorage
-   (ไม่แก้โค้ดเดิมของคุณ)
-================================= */
-
-// ดัก localStorage.setItem เดิม
-const originalSetItem = localStorage.setItem;
-
-localStorage.setItem = function (key, value) {
-
-  // บันทึกแบบเดิมก่อน
-  originalSetItem.apply(this, arguments);
-
-  try {
-    const parsed = JSON.parse(value);
-    set(ref(db, key), parsed); // ส่งขึ้น Firebase
-    console.log("☁️ Sync to Firebase:", key);
-  } catch (e) {}
-};
-
-// โหลดข้อมูลจาก Firebase ลง localStorage
-function syncFromFirebase(key) {
-
-  const dbRef = ref(db, key);
-
-  onValue(dbRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      originalSetItem.call(localStorage, key, JSON.stringify(data));
-      console.log("⬇️ Synced from Firebase:", key);
-    }
-  });
-}
-
-/* ==============================
-   🔑 ใส่ชื่อ key ที่ระบบคุณใช้
-   (ถ้าไม่แน่ใจ ปล่อยไว้แบบนี้ได้เลย)
-================================= */
-
-syncFromFirebase("missions");
-syncFromFirebase("users");
-syncFromFirebase("vehicles");
-syncFromFirebase("logs");
-syncFromFirebase("reports");
 
 </script>
 <!-- ===== END FIREBASE ===== -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Realtime Firebase Demo</title>
+</head>
+<body>
 
+  <h2>Realtime Chat</h2>
+
+  <input type="text" id="messageInput" placeholder="พิมพ์ข้อความ...">
+  <button onclick="sendMessage()">ส่ง</button>
+
+  <ul id="messages"></ul>
+
+  <!-- ✅ วาง Firebase ตรงนี้ก่อน </body> -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      onSnapshot, 
+      query, 
+      orderBy,
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // 🔥 ใส่ config ของคุณตรงนี้
+    const firebaseConfig = {
+      apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
+  authDomain: "ddpmut.firebaseapp.com",
+  databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ddpmut",
+  storageBucket: "ddpmut.firebasestorage.app",
+  messagingSenderId: "320849690442",
+  appId: "1:320849690442:web:70f3baef23bfe21093cbb3",
+  measurementId: "G-KS39RKPVJ5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const messagesRef = collection(db, "messages");
+    const q = query(messagesRef, orderBy("createdAt"));
+
+    // ✅ Realtime ทำงานตรงนี้
+    onSnapshot(q, (snapshot) => {
+      const list = document.getElementById("messages");
+      list.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const li = document.createElement("li");
+        li.textContent = doc.data().text;
+        list.appendChild(li);
+      });
+    });
+
+    // ✅ ฟังก์ชันส่งข้อมูลเข้า Firestore
+    window.sendMessage = async function () {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      await addDoc(messagesRef, {
+        text: text,
+        createdAt: serverTimestamp()
+      });
+
+      input.value = "";
+    };
+  </script>
+
+</body>
+</html>
 
 
 </body>
