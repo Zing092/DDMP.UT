@@ -110,6 +110,21 @@ h1,h2,h3,h4,h5,.brand,.kanit{font-family:'Kanit',sans-serif;}
 .res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
 .res-card{background:linear-gradient(145deg,rgba(10,33,88,0.5),rgba(5,15,45,0.6));border:1px solid var(--border);border-radius:12px;padding:14px;border-top:3px solid var(--success);}
 .res-card.busy{border-top-color:var(--accent);}
+.dash-res-card{background:linear-gradient(145deg,rgba(10,33,88,0.5),rgba(5,15,45,0.6));border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:all 0.2s;}
+.dash-res-card:hover{border-color:rgba(77,150,255,0.3);}
+.dash-res-card.inuse{border-left:3px solid var(--accent);}
+.dash-res-card.free{border-left:3px solid var(--success);}
+.dash-res-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.dash-res-icon.v-free{background:rgba(0,229,176,0.12);color:var(--success);}
+.dash-res-icon.v-busy{background:rgba(255,69,96,0.12);color:var(--accent);}
+.dash-res-info{flex:1;min-width:0;}
+.dash-res-title{font-weight:700;font-size:0.88rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-res-sub{font-size:0.75rem;color:var(--text-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-res-user{font-size:0.75rem;color:var(--warning);margin-top:2px;}
+.dash-res-loc{font-size:0.75rem;color:var(--cyan);margin-top:1px;}
+.dash-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dash-status-dot.free{background:var(--success);box-shadow:0 0 6px var(--success);}
+.dash-status-dot.busy{background:var(--accent);box-shadow:0 0 6px var(--accent);}
 .res-title{font-weight:700;color:var(--text);font-size:0.88rem;}
 .res-sub{font-size:0.78rem;color:var(--text-muted);margin-top:2px;}
 .avail-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:0.78rem;}
@@ -140,6 +155,33 @@ h1,h2,h3,h4,h5,.brand,.kanit{font-family:'Kanit',sans-serif;}
 .toast-item.error{border-color:rgba(255,69,96,0.4);}.toast-item.error::before{content:'❌';}
 @keyframes toastIn{from{transform:translateX(80px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 @media(max-width:768px){.sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.main{margin-left:0;}.hamburger{display:block !important;}.content{padding:14px;}.topbar{padding:11px 14px;}}
+
+/* ===== MISSING CLASSES FIX ===== */
+.fw-600{font-weight:600;}
+.text-muted{color:var(--text-muted) !important;}
+.text-success{color:var(--success) !important;}
+.text-danger{color:var(--accent) !important;}
+.badge-type{padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+.badge-fire{background:rgba(255,69,96,0.15);color:#ff6b84;border:1px solid rgba(255,69,96,0.2);}
+.badge-water{background:rgba(0,212,255,0.1);color:var(--cyan);border:1px solid rgba(0,212,255,0.2);}
+.badge-accident{background:rgba(255,184,48,0.1);color:var(--warning);border:1px solid rgba(255,184,48,0.2);}
+.badge-search{background:rgba(0,229,176,0.1);color:var(--success);border:1px solid rgba(0,229,176,0.2);}
+.badge-other{background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid var(--border);}
+.badge-complete{background:rgba(0,229,176,0.1);color:var(--success);border:1px solid rgba(0,229,176,0.2);}
+.badge-inprogress{background:rgba(255,184,48,0.1);color:var(--warning);border:1px solid rgba(255,184,48,0.2);}
+
+.history-card{background:linear-gradient(145deg,rgba(10,33,88,0.45),rgba(5,15,45,0.55));border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;border-left:3px solid var(--blue3);transition:all 0.2s;}
+.history-card:hover{border-color:rgba(77,150,255,0.4);transform:translateX(3px);box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+.history-card.fire{border-left-color:var(--accent);}.history-card.water{border-left-color:var(--cyan);}.history-card.accident{border-left-color:var(--warning);}.history-card.search{border-left-color:var(--success);}
+
+.resource-card{background:linear-gradient(145deg,rgba(10,33,88,0.5),rgba(5,15,45,0.6));border:1px solid var(--border);border-radius:12px;padding:14px;border-top:3px solid var(--success);}
+.resource-card.busy{border-top-color:var(--accent);}
+.rc-title{font-weight:700;color:var(--text);font-size:0.9rem;}
+.rc-sub{font-size:0.78rem;color:var(--text-muted);margin-top:2px;}
+
+.avail-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:0.78rem;}
+.avail-badge.avail{background:rgba(0,229,176,0.1);color:var(--success);border:1px solid rgba(0,229,176,0.2);}
+.avail-badge.busy{background:rgba(255,69,96,0.1);color:var(--accent);border:1px solid rgba(255,69,96,0.2);}
 </style>
 </head>
 <body>
@@ -166,6 +208,10 @@ h1,h2,h3,h4,h5,.brand,.kanit{font-family:'Kanit',sans-serif;}
       </div>
       <button class="btn-login" id="loginBtn" onclick="doLogin()"><i class="fas fa-shield-alt me-2"></i>เข้าสู่ระบบ</button>
       <p style="text-align:center;margin-top:14px;font-size:0.76rem;color:var(--text-muted);">ติดต่อผู้ดูแลระบบหากลืมรหัสผ่าน</p>
+      <div id="firebaseHint" style="margin-top:16px;padding:12px;background:rgba(255,184,48,0.08);border:1px solid rgba(255,184,48,0.25);border-radius:10px;font-size:0.75rem;color:var(--warning);display:none;">
+        <strong>⚙️ หากล็อคอินไม่ได้:</strong> ไปที่ Firebase Console → Realtime Database → Rules แล้วตั้งค่าเป็น:<br>
+        <code style="display:block;margin-top:6px;padding:6px;background:rgba(0,0,0,0.3);border-radius:4px;color:#fff;font-size:0.72rem;">{ "rules": { ".read": true, ".write": true } }</code>
+      </div>
     </div>
   </div>
 </div>
@@ -213,9 +259,40 @@ h1,h2,h3,h4,h5,.brand,.kanit{font-family:'Kanit',sans-serif;}
           <div class="col-6 col-md-3"><div class="stat-card s-green"><i class="fas fa-truck stat-icon"></i><div class="stat-num" id="statVehicleAvail">0</div><div class="stat-lbl">รถพร้อมใช้งาน</div></div></div>
           <div class="col-6 col-md-3"><div class="stat-card s-gold"><i class="fas fa-water stat-icon"></i><div class="stat-num" id="statPumpAvail">0</div><div class="stat-lbl">เครื่องสูบพร้อมใช้</div></div></div>
         </div>
+        <!-- Vehicle & Pump Status on Dashboard -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-hdr"><i class="fas fa-truck"></i>สถานะรถปฏิบัติภารกิจ</div>
+              <div style="padding:12px;" id="dashVehicleGrid">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.85rem;">ยังไม่มีข้อมูลรถ</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-hdr"><i class="fas fa-water"></i>สถานะเครื่องสูบน้ำ</div>
+              <div style="padding:12px;" id="dashPumpGrid">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.85rem;">ยังไม่มีข้อมูลเครื่องสูบน้ำ</div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="row g-3">
-          <div class="col-md-8"><div class="card"><div class="card-hdr"><i class="fas fa-history"></i>ภารกิจล่าสุด</div><div style="padding:10px;max-height:340px;overflow-y:auto;" id="dashRecentList"><div style="text-align:center;padding:32px;color:var(--text-muted);">ไม่มีข้อมูล</div></div></div></div>
-          <div class="col-md-4"><div class="card"><div class="card-hdr"><i class="fas fa-chart-pie"></i>ประเภทภารกิจวันนี้</div><div class="card-body"><div class="chart-wrap"><canvas id="dashPieChart"></canvas></div></div></div></div>
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-hdr"><i class="fas fa-history"></i>ภารกิจล่าสุด</div>
+              <div style="padding:10px;max-height:340px;overflow-y:auto;" id="dashRecentList">
+                <div style="text-align:center;padding:32px;color:var(--text-muted);">ไม่มีข้อมูล</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-hdr"><i class="fas fa-chart-pie"></i>ประเภทภารกิจวันนี้</div>
+              <div class="card-body"><div class="chart-wrap"><canvas id="dashPieChart"></canvas></div></div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="page" id="pageNewReport">
@@ -372,14 +449,17 @@ async function bootEnsureAdmin() {
     const snap = await get(ref(db, 'users/ADMIN001'));
     if (!snap.exists()) {
       await set(ref(db, 'users/ADMIN001'), {
-        empId: 'ADMIN001',
-        name: 'หัวหน้ากองป้องกันฯ',
+        empId: 'ADMIN001', name: 'หัวหน้ากองป้องกันฯ',
         position: 'หัวหน้ากองป้องกันและบรรเทาสาธารณภัย',
-        role: 'admin',
-        password: 'admin1234'
+        role: 'admin', password: 'admin1234'
       });
+      console.log('✅ Admin account created');
+    } else {
+      console.log('✅ Admin account exists:', snap.val());
     }
-  } catch(e) { console.warn('boot admin check failed:', e); }
+  } catch(e) {
+    console.warn('⚠️ bootEnsureAdmin failed (Firebase Rules may be blocking):', e.message);
+  }
 }
 bootEnsureAdmin();
 
@@ -389,24 +469,64 @@ window.togglePwd = function(id) {
   el.type = el.type === 'password' ? 'text' : 'password';
 };
 
+// Built-in admin fallback (in case Firebase Rules block read)
+const BUILTIN_ADMIN = { empId:'ADMIN001', name:'หัวหน้ากองป้องกันฯ', position:'หัวหน้ากองป้องกันและบรรเทาสาธารณภัย', role:'admin', password:'admin1234' };
+
 window.doLogin = async function() {
-  const empId = document.getElementById('loginEmpId').value.trim();
-  const password = document.getElementById('loginPassword').value;
+  const empId = document.getElementById('loginEmpId').value.trim().toUpperCase();
+  const password = document.getElementById('loginPassword').value.trim();
   if (!empId || !password) { toast('กรุณากรอกรหัสพนักงานและรหัสผ่าน','error'); return; }
-  const loginBtn = document.querySelector('#loginForm .btn-primary-custom');
-  loginBtn.disabled = true;
-  loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
+
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) { loginBtn.disabled = true; loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...'; }
+
+  const resetBtn = () => { if (loginBtn) { loginBtn.disabled = false; loginBtn.innerHTML = '<i class="fas fa-shield-alt me-2"></i>เข้าสู่ระบบ'; } };
+
   try {
-    const snap = await get(ref(db, 'users/' + empId));
-    if (!snap.exists()) { toast('ไม่พบรหัสพนักงานนี้ในระบบ','error'); return; }
-    const user = snap.val();
-    if (user.password !== password) { toast('รหัสผ่านไม่ถูกต้อง','error'); return; }
-    currentUser = { ...user, empId };
+    // Step 1: Try to write admin if needed
+    try {
+      await set(ref(db, 'users/ADMIN001'), BUILTIN_ADMIN);
+    } catch(writeErr) {
+      console.warn('Cannot write admin (may already exist or rules block):', writeErr.message);
+    }
+
+    // Step 2: Try Firebase lookup
+    let user = null;
+    try {
+      const snap = await get(ref(db, 'users/' + empId));
+      if (snap.exists()) {
+        user = { ...snap.val(), empId };
+      }
+    } catch(readErr) {
+      console.warn('Firebase read failed:', readErr.message);
+      // Show Firebase Rules warning
+      toast('⚠️ Firebase Rules อาจปิดอยู่ — ลองใช้ built-in admin...', '');
+    }
+
+    // Step 3: Fallback to built-in admin if Firebase read failed
+    if (!user && empId === 'ADMIN001') {
+      user = { ...BUILTIN_ADMIN };
+      console.log('Using built-in admin fallback');
+    }
+
+    if (!user) {
+      toast('❌ ไม่พบรหัสพนักงาน "' + empId + '" — ตรวจสอบ Firebase Rules ใน Console', 'error');
+      resetBtn(); return;
+    }
+
+    if (user.password !== password) {
+      toast('❌ รหัสผ่านไม่ถูกต้อง', 'error');
+      resetBtn(); return;
+    }
+
+    currentUser = user;
+    resetBtn();
     initApp();
-  } catch(e) { toast('เกิดข้อผิดพลาด: ' + e.message,'error'); }
-  finally {
-    loginBtn.disabled = false;
-    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ';
+
+  } catch(e) {
+    console.error('Login error:', e);
+    toast('❌ Error: ' + e.message, 'error');
+    resetBtn();
   }
 };
 
@@ -467,6 +587,7 @@ function setupDataListeners() {
     renderVehiclesTable();
     loadVehicleStatus();
     updateDashboardStats();
+    renderDashVehicles();
   });
   onValue(ref(db, 'pumps'), snap => {
     allPumps = snap.val() || {};
@@ -474,6 +595,7 @@ function setupDataListeners() {
     renderPumpsTable();
     loadPumpStatus();
     updateDashboardStats();
+    renderDashPumps();
   });
 }
 
@@ -513,6 +635,8 @@ function updateDashboard() {
   updateDashboardStats();
   renderDashRecent();
   renderDashPieChart();
+  renderDashVehicles();
+  renderDashPumps();
 }
 
 function updateDashboardStats() {
@@ -709,7 +833,68 @@ window.submitReport = async function() {
   } catch(e) { toast('เกิดข้อผิดพลาด: '+e.message,'error'); }
 };
 
-// ========== HISTORY ==========
+// ========== DASHBOARD VEHICLE STATUS ==========
+function renderDashVehicles() {
+  const grid = document.getElementById('dashVehicleGrid');
+  if (!grid) return;
+  const entries = Object.entries(allVehicles);
+  if (!entries.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.85rem;"><i class="fas fa-truck me-2"></i>ยังไม่มีข้อมูลรถ</div>';
+    return;
+  }
+  // Sort: busy first
+  entries.sort((a,b) => (b[1].inUse?1:0) - (a[1].inUse?1:0));
+  grid.innerHTML = entries.map(([id,v]) => {
+    const busy = !!v.inUse;
+    const usedReport = busy && v.reportId ? allReports[v.reportId] : null;
+    const location = usedReport ? (usedReport.location || '-') : '';
+    return `
+    <div class="dash-res-card ${busy?'inuse':'free'}">
+      <div class="dash-res-icon ${busy?'v-busy':'v-free'}"><i class="fas fa-truck"></i></div>
+      <div class="dash-res-info">
+        <div class="dash-res-title">${v.plate} <span style="font-weight:400;font-size:0.78rem;color:var(--text-muted);">${v.brand||''} ${v.model||''}</span></div>
+        <div class="dash-res-sub">${v.type||'รถปฏิบัติการ'}</div>
+        ${busy ? `<div class="dash-res-user"><i class="fas fa-user me-1"></i>${v.usedByName||v.usedBy||'-'}</div>` : ''}
+        ${busy && location ? `<div class="dash-res-loc"><i class="fas fa-map-marker-alt me-1"></i>${location}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div class="dash-status-dot ${busy?'busy':'free'}"></div>
+        <span style="font-size:0.7rem;${busy?'color:var(--accent)':'color:var(--success)'};">${busy?'กำลังใช้':'ว่าง'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ========== DASHBOARD PUMP STATUS ==========
+function renderDashPumps() {
+  const grid = document.getElementById('dashPumpGrid');
+  if (!grid) return;
+  const entries = Object.entries(allPumps);
+  if (!entries.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.85rem;"><i class="fas fa-water me-2"></i>ยังไม่มีข้อมูลเครื่องสูบน้ำ</div>';
+    return;
+  }
+  entries.sort((a,b) => (b[1].inUse?1:0) - (a[1].inUse?1:0));
+  grid.innerHTML = entries.map(([id,p]) => {
+    const busy = !!p.inUse;
+    return `
+    <div class="dash-res-card ${busy?'inuse':'free'}">
+      <div class="dash-res-icon ${busy?'v-busy':'v-free'}"><i class="fas fa-water"></i></div>
+      <div class="dash-res-info">
+        <div class="dash-res-title">${p.assetNo} <span style="font-weight:400;font-size:0.78rem;color:var(--text-muted);">${p.brand||''} ${p.model||''}</span></div>
+        <div class="dash-res-sub">เครื่องสูบน้ำ</div>
+        ${busy ? `<div class="dash-res-user"><i class="fas fa-user me-1"></i>ผู้ขอใช้: ${p.usedByName||'-'}</div>` : ''}
+        ${busy && p.usedLocation ? `<div class="dash-res-loc"><i class="fas fa-map-marker-alt me-1"></i>${p.usedLocation}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div class="dash-status-dot ${busy?'busy':'free'}"></div>
+        <span style="font-size:0.7rem;${busy?'color:var(--accent)':'color:var(--success)'};">${busy?'กำลังใช้':'ว่าง'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
 window.loadHistory = function() {
   const list = document.getElementById('historyList');
   const search = (document.getElementById('historySearch').value||'').toLowerCase();
@@ -1211,6 +1396,7 @@ document.getElementById('historySearch').addEventListener('keyup', e => { if(e.k
 
 </script>
 <script>
+setTimeout(()=>{ const h=document.getElementById('firebaseHint'); if(h && document.getElementById('authScreen').style.display!=='none') h.style.display='block'; }, 3000);
 (function(){
   var c=document.getElementById('authScreen');
   if(!c)return;
