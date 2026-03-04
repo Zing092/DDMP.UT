@@ -1155,7 +1155,7 @@ if(sc){const e=DB.emps().find(x=>x.id===sc);if(e){CU=e;bootApp();}}
 
   <!-- ✅ วาง Firebase ตรงนี้ก่อน </body> -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    
     import { 
       getFirestore, 
       collection, 
@@ -1164,13 +1164,12 @@ if(sc){const e=DB.emps().find(x=>x.id===sc);if(e){CU=e;bootApp();}}
       query, 
       orderBy,
       serverTimestamp 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+    } 
     // 🔥 ใส่ config ของคุณตรงนี้
     const firebaseConfig = {
       apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
   authDomain: "ddpmut.firebaseapp.com",
-  databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app",
+  import { getFirestore } from "firebase-firestore.js": "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app/",
   projectId: "ddpmut",
   storageBucket: "ddpmut.firebasestorage.app",
   messagingSenderId: "320849690442",
