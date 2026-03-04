@@ -1136,22 +1136,8 @@ if(sc){const e=DB.emps().find(x=>x.id===sc);if(e){CU=e;bootApp();}}
 
 
 
-</script>
-<!-- ===== END FIREBASE ===== -->
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
+
   <title>Realtime Firebase Demo</title>
-</head>
-<body>
-
-  <h2>Realtime Chat</h2>
-
-  <input type="text" id="messageInput" placeholder="พิมพ์ข้อความ...">
-  <button onclick="sendMessage()">ส่ง</button>
-
-  <ul id="messages"></ul>
 
   <!-- ✅ วาง Firebase ตรงนี้ก่อน </body> -->
   <script type="module">
@@ -1169,49 +1155,48 @@ import {
     const firebaseConfig = {
   apiKey: "AIzaSyBp4Xr48zvBg7gq7u12AaoPm9Dxj6JKUQA",
   authDomain: "ddpmut.firebaseapp.com",
-  databaseURL: "https://ddpmut-default-rtdb.asia-southeast1.firebasedatabase.app",
+ databaseURL: "https://ddpmut-default-rtdb.firebaseio.com",
   projectId: "ddpmut",
   storageBucket: "ddpmut.firebasestorage.app",
   messagingSenderId: "320849690442",
   appId: "1:320849690442:web:70f3baef23bfe21093cbb3",
   measurementId: "G-KS39RKPVJ5"
 };
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    const app = initializeApp(firebaseConfig);
-   const analytics = getAnalytics(app);
+const messagesRef = ref(db, "messages");
 
-    const messagesRef = collection(db, "messages");
-    const q = query(messagesRef, orderBy("createdAt"));
+onValue(messagesRef, (snapshot) => {
+  const data = snapshot.val();
+  const list = document.getElementById("messages");
+  list.innerHTML = "";
 
-    // ✅ Realtime ทำงานตรงนี้
-    onSnapshot(q, (snapshot) => {
-      const list = document.getElementById("messages");
-      list.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const li = document.createElement("li");
-        li.textContent = doc.data().text;
-        list.appendChild(li);
-      });
+  if (data) {
+    Object.values(data).forEach(msg => {
+      const li = document.createElement("li");
+      li.textContent = msg.text;
+      list.appendChild(li);
     });
+  }
+});
 
-    // ✅ ฟังก์ชันส่งข้อมูลเข้า Firestore
-    window.sendMessage = async function () {
-      const input = document.getElementById("messageInput");
-      const text = input.value.trim();
-      if (!text) return;
+window.sendMessage = function () {
+  const input = document.getElementById("messageInput");
+  const text = input.value.trim();
+  if (!text) return;
 
-      await addDoc(messagesRef, {
-        text: text,
-        createdAt: serverTimestamp()
-      });
+  push(messagesRef, {
+    text: text,
+    createdAt: Date.now()
+  });
 
-      input.value = "";
-    };
+  input.value = "";
+};
+
   </script>
-
 </body>
 </html>
 
 
-</body>
-</html>
+
